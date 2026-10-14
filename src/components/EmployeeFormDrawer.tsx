@@ -159,6 +159,7 @@ export default function EmployeeFormDrawer({
     bgColorEnd: values?.bgColorEnd ?? "#e0e0e0",
     textColor: values?.textColor ?? "#1f1f1f",
     qr: { ...defaultQr, ...values?.qr },
+    scanCount: employee?.scanCount ?? 0,
   };
 
   return (

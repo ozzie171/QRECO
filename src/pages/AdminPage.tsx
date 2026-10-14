@@ -19,6 +19,7 @@ import {
   DeleteOutlined,
   QrcodeOutlined,
   LinkOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
@@ -149,6 +150,18 @@ export default function AdminPage() {
             }}
           />
         </Tooltip>
+      ),
+    },
+    {
+      title: 'Tarama Sayısı',
+      dataIndex: 'scanCount',
+      key: 'scanCount',
+      sorter: (a, b) => a.scanCount - b.scanCount,
+      render: (scanCount: number) => (
+        <Space>
+          <ScanOutlined />
+          <Text>{scanCount ?? 0}</Text>
+        </Space>
       ),
     },
     {

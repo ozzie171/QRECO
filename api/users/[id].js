@@ -8,7 +8,16 @@ export default async function handler(req, res) {
     const { data, error } = await supabase.from('employees').select('*').eq('id', id).maybeSingle();
     if (error) return res.status(500).json({ error: error.message });
     if (!data) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    return res.status(200).json(rowToEmployee(data));
+
+    const newScanCount = (data.scan_count ?? 0) + 1;
+    const { data: updated } = await supabase
+      .from('employees')
+      .update({ scan_count: newScanCount })
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+
+    return res.status(200).json(rowToEmployee(updated ?? { ...data, scan_count: newScanCount }));
   }
 
   if (req.method === 'PUT') {

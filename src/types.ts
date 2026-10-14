@@ -29,8 +29,9 @@ export interface Employee {
   bgColorEnd: string;
   textColor: string;
   qr: QrDesign;
+  scanCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export type EmployeeInput = Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>;
+export type EmployeeInput = Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'scanCount'>;

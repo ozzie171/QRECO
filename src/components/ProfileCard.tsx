@@ -6,6 +6,7 @@ import {
   PhoneOutlined,
   GlobalOutlined,
   EnvironmentOutlined,
+  ContactsOutlined,
   LinkedinOutlined,
   InstagramOutlined,
   TwitterOutlined,
@@ -46,6 +47,26 @@ const SOCIAL_ICONS: { key: keyof ProfileSocialLinks; icon: ReactNode; label: str
   { key: 'facebook', icon: <FacebookOutlined />, label: 'Facebook' },
 ];
 
+function escapeVCardValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
+function buildVCard(data: ProfileCardData, fullName: string): string {
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `N:${escapeVCardValue(data.lastName)};${escapeVCardValue(data.firstName)};;;`,
+    `FN:${escapeVCardValue(fullName || 'İsimsiz Çalışan')}`,
+  ];
+  if (data.position) lines.push(`TITLE:${escapeVCardValue(data.position)}`);
+  if (data.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(data.phone)}`);
+  if (data.email) lines.push(`EMAIL:${escapeVCardValue(data.email)}`);
+  if (data.website) lines.push(`URL:${escapeVCardValue(data.website)}`);
+  if (data.address) lines.push(`ADR;TYPE=WORK:;;${escapeVCardValue(data.address)};;;;`);
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+
 export default function ProfileCard({ data, compact = false }: Props) {
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
   const color = data.textColor || '#1f1f1f';
@@ -54,6 +75,22 @@ export default function ProfileCard({ data, compact = false }: Props) {
     : '';
   const social = data.social || { linkedin: '', instagram: '', twitter: '', facebook: '' };
   const activeSocial = SOCIAL_ICONS.filter((item) => social[item.key]);
+
+  const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(buildVCard(data, fullName))}`;
+  const vcardFileName = `${[data.firstName, data.lastName].filter(Boolean).join('-') || 'kisi'}.vcf`;
+
+  const actionButtonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '8px 18px',
+    borderRadius: 999,
+    border: `1px solid ${color}55`,
+    color,
+    fontSize: 14,
+    fontWeight: 500,
+    textDecoration: 'none',
+  } as const;
 
   const contactRows: { key: string; icon: ReactNode; href: string; label: string; text: string; external?: boolean }[] =
     [
@@ -101,6 +138,13 @@ export default function ProfileCard({ data, compact = false }: Props) {
           {data.position}
         </Text>
       )}
+
+      <div style={{ marginTop: compact ? 14 : 20 }}>
+        <a href={vcardHref} download={vcardFileName} style={actionButtonStyle}>
+          <ContactsOutlined />
+          Rehbere Ekle
+        </a>
+      </div>
 
       {contactRows.length > 0 && (
         <div
@@ -172,22 +216,7 @@ export default function ProfileCard({ data, compact = false }: Props) {
           }}
         >
           {mapsUrl && (
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 18px',
-                borderRadius: 999,
-                border: `1px solid ${color}55`,
-                color,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
+            <a href={mapsUrl} target="_blank" rel="noreferrer" style={actionButtonStyle}>
               <EnvironmentOutlined />
               Yol Tarifi Al
             </a>

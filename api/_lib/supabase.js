@@ -48,6 +48,7 @@ export function rowToEmployee(row) {
     bgColorEnd: row.bg_color_end,
     textColor: row.text_color,
     qr: { ...defaultQr, ...row.qr },
+    scanCount: row.scan_count ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

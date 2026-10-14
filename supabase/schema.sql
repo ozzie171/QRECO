@@ -16,6 +16,7 @@ create table if not exists employees (
   bg_color_end text not null default '#e0e0e0',
   text_color text not null default '#1f1f1f',
   qr jsonb not null default '{"fgColor":"#000000","bgColor":"#ffffff","logoUrl":"","logoSize":40,"bordered":true,"shape":"square"}'::jsonb,
+  scan_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
