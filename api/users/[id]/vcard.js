@@ -19,7 +19,10 @@ function buildVCard(employee) {
   if (employee.position) lines.push(`TITLE:${escapeVCardValue(employee.position)}`);
   if (employee.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(employee.phone)}`);
   if (employee.email) lines.push(`EMAIL:${escapeVCardValue(employee.email)}`);
-  if (employee.website) lines.push(`URL:${escapeVCardValue(employee.website)}`);
+  if (employee.website) {
+    const url = /^https?:\/\//i.test(employee.website) ? employee.website : `https://${employee.website}`;
+    lines.push(`URL:${escapeVCardValue(url)}`);
+  }
   if (employee.address) lines.push(`ADR;TYPE=WORK:;;${escapeVCardValue(employee.address)};;;;`);
   lines.push('END:VCARD');
   return lines.join('\r\n');

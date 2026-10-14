@@ -24,6 +24,7 @@ import {
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
+import { withHttpProtocol } from '../lib/url';
 import type { Employee, EmployeeInput } from '../types';
 
 const { Header, Content } = Layout;
@@ -128,7 +129,7 @@ export default function AdminPage() {
       key: 'website',
       render: (website: string) =>
         website ? (
-          <a href={website} target="_blank" rel="noreferrer">
+          <a href={withHttpProtocol(website)} target="_blank" rel="noreferrer">
             {website}
           </a>
         ) : (

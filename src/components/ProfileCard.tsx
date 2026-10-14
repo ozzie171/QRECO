@@ -12,6 +12,7 @@ import {
   TwitterOutlined,
   FacebookOutlined,
 } from '@ant-design/icons';
+import { withHttpProtocol } from '../lib/url';
 
 const { Title, Text } = Typography;
 
@@ -83,7 +84,7 @@ export default function ProfileCard({ data, compact = false }: Props) {
         ? {
             key: 'website',
             icon: <GlobalOutlined />,
-            href: data.website,
+            href: withHttpProtocol(data.website),
             label: 'Web Sitesi',
             text: data.website,
             external: true,
