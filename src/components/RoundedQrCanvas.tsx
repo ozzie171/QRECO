@@ -145,11 +145,11 @@ export default function RoundedQrCanvas({
         const padding = logoSize * 0.18;
         const boxSize = logoSize + padding * 2;
         const boxPos = (size - boxSize) / 2;
-        if (!isTransparentBg) {
-          ctx.fillStyle = bgColor;
-          roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
-          ctx.fill();
-        }
+        // The logo always sits on its own clean patch, even when the overall
+        // QR background is transparent, so it never blends into the modules.
+        ctx.fillStyle = isTransparentBg ? "#ffffff" : bgColor;
+        roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
+        ctx.fill();
         const imgPos = (size - logoSize) / 2;
         ctx.drawImage(img, imgPos, imgPos, logoSize, logoSize);
       };

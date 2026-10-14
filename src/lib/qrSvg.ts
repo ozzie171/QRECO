@@ -116,9 +116,10 @@ export async function buildQrSvgMarkup({
     const boxPos = (size - boxSize) / 2;
     const imgPos = (size - logoSize) / 2;
     const boxRadius = boxSize * 0.25;
-    const boxMarkup = isTransparentBg
-      ? ''
-      : `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" />`;
+    // The logo always sits on its own clean patch, even when the overall
+    // QR background is transparent, so it never blends into the modules.
+    const logoBackdropColor = isTransparentBg ? '#ffffff' : bgColor;
+    const boxMarkup = `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${logoBackdropColor}" />`;
 
     const inlineLogo = await buildInlineLogoMarkup(logoUrl, imgPos, imgPos, logoSize);
     const logoElement =
