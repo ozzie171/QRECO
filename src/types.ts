@@ -24,6 +24,8 @@ export interface Employee {
   website: string;
   photoUrl: string;
   address: string;
+  enPosition: string;
+  enAddress: string;
   social: SocialLinks;
   bgColorStart: string;
   bgColorEnd: string;

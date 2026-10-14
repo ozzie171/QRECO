@@ -1,4 +1,4 @@
-import { getSupabase, rowToEmployee } from '../../_lib/supabase.js';
+import { getSupabase, rowToEmployee, applyLocale } from '../../_lib/supabase.js';
 
 function escapeVCardValue(value) {
   return String(value)
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
 
-  const employee = rowToEmployee(data);
+  const employee = applyLocale(rowToEmployee(data), req);
   const vcard = buildVCard(employee);
   const fileName = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'kisi';
 

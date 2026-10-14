@@ -11,6 +11,8 @@ create table if not exists employees (
   website text not null default '',
   photo_url text not null default '',
   address text not null default '',
+  en_position text not null default '',
+  en_address text not null default '',
   social jsonb not null default '{"linkedin":"","instagram":"","twitter":"","facebook":""}'::jsonb,
   bg_color_start text not null default '#f5f5f5',
   bg_color_end text not null default '#e0e0e0',

@@ -1,4 +1,4 @@
-import { getSupabase, rowToEmployee, employeeUpdateToRow } from '../_lib/supabase.js';
+import { getSupabase, rowToEmployee, employeeUpdateToRow, applyLocale } from '../_lib/supabase.js';
 
 export default async function handler(req, res) {
   const supabase = getSupabase();
@@ -17,7 +17,8 @@ export default async function handler(req, res) {
       .select()
       .maybeSingle();
 
-    return res.status(200).json(rowToEmployee(updated ?? { ...data, scan_count: newScanCount }));
+    const employee = rowToEmployee(updated ?? { ...data, scan_count: newScanCount });
+    return res.status(200).json(applyLocale(employee, req));
   }
 
   if (req.method === 'PUT') {

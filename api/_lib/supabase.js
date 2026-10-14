@@ -43,6 +43,8 @@ export function rowToEmployee(row) {
     website: row.website,
     photoUrl: row.photo_url,
     address: row.address,
+    enPosition: row.en_position || '',
+    enAddress: row.en_address || '',
     social: { ...defaultSocial, ...row.social },
     bgColorStart: row.bg_color_start,
     bgColorEnd: row.bg_color_end,
@@ -64,11 +66,27 @@ export function employeeInputToRow(body = {}) {
     website: body.website || '',
     photo_url: body.photoUrl || '',
     address: body.address || '',
+    en_position: body.enPosition || '',
+    en_address: body.enAddress || '',
     social: { ...defaultSocial, ...(body.social || {}) },
     bg_color_start: body.bgColorStart || '#f5f5f5',
     bg_color_end: body.bgColorEnd || '#e0e0e0',
     text_color: body.textColor || '#1f1f1f',
     qr: { ...defaultQr, ...(body.qr || {}) },
+  };
+}
+
+/** Turkey (and requests Vercel can't geolocate, e.g. local dev) get the
+ * default-language fields; everywhere else falls back to the English
+ * overrides when the employee has provided them. */
+export function applyLocale(employee, req) {
+  const country = req.headers['x-vercel-ip-country'];
+  if (!country || country === 'TR') return employee;
+
+  return {
+    ...employee,
+    position: employee.enPosition || employee.position,
+    address: employee.enAddress || employee.address,
   };
 }
 
@@ -82,6 +100,8 @@ export function employeeUpdateToRow(body = {}, existingRow) {
   if (body.website !== undefined) row.website = body.website;
   if (body.photoUrl !== undefined) row.photo_url = body.photoUrl;
   if (body.address !== undefined) row.address = body.address;
+  if (body.enPosition !== undefined) row.en_position = body.enPosition;
+  if (body.enAddress !== undefined) row.en_address = body.enAddress;
   if (body.social !== undefined) row.social = { ...defaultSocial, ...existingRow.social, ...body.social };
   if (body.bgColorStart !== undefined) row.bg_color_start = body.bgColorStart;
   if (body.bgColorEnd !== undefined) row.bg_color_end = body.bgColorEnd;

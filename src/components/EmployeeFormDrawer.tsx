@@ -66,6 +66,8 @@ const emptyValues: EmployeeInput = {
   website: "",
   photoUrl: "",
   address: "",
+  enPosition: "",
+  enAddress: "",
   social: defaultSocial,
   bgColorStart: "#f5f5f5",
   bgColorEnd: "#e0e0e0",
@@ -177,6 +179,8 @@ export default function EmployeeFormDrawer({
     website: values?.website ?? "",
     photoUrl: values?.photoUrl ?? "",
     address: values?.address ?? "",
+    enPosition: values?.enPosition ?? "",
+    enAddress: values?.enAddress ?? "",
     social: { ...defaultSocial, ...values?.social },
     bgColorStart: values?.bgColorStart ?? "#f5f5f5",
     bgColorEnd: values?.bgColorEnd ?? "#e0e0e0",
@@ -300,6 +304,29 @@ export default function EmployeeFormDrawer({
                       <Form.Item label="Adres" name="address">
                         <Input.TextArea
                           placeholder="Şirket adresi"
+                          autoSize={{ minRows: 2, maxRows: 3 }}
+                        />
+                      </Form.Item>
+
+                      <Text strong style={{ display: "block", marginBottom: 4 }}>
+                        İngilizce Sürüm (isteğe bağlı)
+                      </Text>
+                      <Text
+                        type="secondary"
+                        style={{ display: "block", marginBottom: 12, fontSize: 12 }}
+                      >
+                        QR kod Türkiye dışından okutulduğunda pozisyon ve
+                        adres burada girdiğiniz İngilizce metinlerle
+                        gösterilir; boş bırakılırsa Türkçe metin kullanılır.
+                      </Text>
+
+                      <Form.Item label="Pozisyon (İngilizce)" name="enPosition">
+                        <Input placeholder="e.g. Software Engineer" />
+                      </Form.Item>
+
+                      <Form.Item label="Adres (İngilizce)" name="enAddress">
+                        <Input.TextArea
+                          placeholder="Company address in English"
                           autoSize={{ minRows: 2, maxRows: 3 }}
                         />
                       </Form.Item>

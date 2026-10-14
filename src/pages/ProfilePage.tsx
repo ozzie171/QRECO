@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Result, Spin } from 'antd';
+import { Result } from 'antd';
 import { fetchEmployee } from '../api';
 import ProfileCard from '../components/ProfileCard';
 import type { Employee } from '../types';
@@ -23,8 +23,20 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Spin size="large" />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: '#141414',
+        }}
+      >
+        <img
+          src="/eco-logo-beyaz.svg"
+          alt="Yükleniyor"
+          style={{ width: 100, animation: 'qreco-pulse 1.4s ease-in-out infinite' }}
+        />
       </div>
     );
   }

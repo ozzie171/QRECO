@@ -93,6 +93,8 @@ export default function AdminPage() {
         website: employee.website,
         photoUrl: employee.photoUrl,
         address: employee.address,
+        enPosition: employee.enPosition,
+        enAddress: employee.enAddress,
         social: employee.social,
         bgColorStart: employee.bgColorStart,
         bgColorEnd: employee.bgColorEnd,
