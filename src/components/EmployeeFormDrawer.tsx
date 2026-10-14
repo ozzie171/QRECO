@@ -397,9 +397,24 @@ export default function EmployeeFormDrawer({
                           style={{ width: "50%" }}
                           getValueFromEvent={(color) => toHex(color)}
                         >
-                          <ColorPicker showText />
+                          <ColorPicker
+                            showText
+                            disabled={values?.qr?.bgColor === "transparent"}
+                          />
                         </Form.Item>
                       </Space.Compact>
+
+                      <Form.Item label="Şeffaf Arkaplan">
+                        <Switch
+                          checked={values?.qr?.bgColor === "transparent"}
+                          onChange={(checked) =>
+                            form.setFieldValue(
+                              ["qr", "bgColor"],
+                              checked ? "transparent" : "#ffffff",
+                            )
+                          }
+                        />
+                      </Form.Item>
 
                       <Form.Item label="Çerçeve Şekli" name={["qr", "shape"]}>
                         <Segmented

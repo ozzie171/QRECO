@@ -107,6 +107,8 @@ export async function buildQrSvgMarkup({
     }
   }
 
+  const isTransparentBg = bgColor === 'transparent';
+
   let logoMarkup = '';
   if (logoUrl) {
     const padding = logoSize * 0.18;
@@ -114,7 +116,9 @@ export async function buildQrSvgMarkup({
     const boxPos = (size - boxSize) / 2;
     const imgPos = (size - logoSize) / 2;
     const boxRadius = boxSize * 0.25;
-    const boxMarkup = `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" />`;
+    const boxMarkup = isTransparentBg
+      ? ''
+      : `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" />`;
 
     const inlineLogo = await buildInlineLogoMarkup(logoUrl, imgPos, imgPos, logoSize);
     const logoElement =
@@ -123,5 +127,7 @@ export async function buildQrSvgMarkup({
     logoMarkup = boxMarkup + logoElement;
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${bgColor}" /><path d="${segments.join(' ')}" fill="${fgColor}" />${logoMarkup}</svg>`;
+  const bgMarkup = isTransparentBg ? '' : `<rect width="${size}" height="${size}" fill="${bgColor}" />`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${bgMarkup}<path d="${segments.join(' ')}" fill="${fgColor}" />${logoMarkup}</svg>`;
 }

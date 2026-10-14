@@ -98,8 +98,11 @@ export default function RoundedQrCanvas({
       col < moduleCount &&
       !!modules.get(row, col);
 
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, size, size);
+    const isTransparentBg = bgColor === "transparent";
+    if (!isTransparentBg) {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+    }
     ctx.fillStyle = fgColor;
 
     const fullRadius = cellSize * 0.5;
@@ -142,9 +145,11 @@ export default function RoundedQrCanvas({
         const padding = logoSize * 0.18;
         const boxSize = logoSize + padding * 2;
         const boxPos = (size - boxSize) / 2;
-        ctx.fillStyle = bgColor;
-        roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
-        ctx.fill();
+        if (!isTransparentBg) {
+          ctx.fillStyle = bgColor;
+          roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
+          ctx.fill();
+        }
         const imgPos = (size - logoSize) / 2;
         ctx.drawImage(img, imgPos, imgPos, logoSize, logoSize);
       };
