@@ -82,16 +82,33 @@ export async function buildQrSvgMarkup({
 
   const fullRadius = cellSize * 0.5;
   const overlap = cellSize * 0.08;
+  const isTransparentBg = bgColor === 'transparent';
+
+  // Modules whose center falls inside the logo's clearing box are left out
+  // entirely (not just covered by a patch on top), so the logo always sits
+  // in genuinely empty space — a transparent background stays truly
+  // transparent there too, instead of forcing a color.
+  const hasLogo = !!logoUrl;
+  const padding = logoSize * 0.18;
+  const boxSize = logoSize + padding * 2;
+  const boxPos = (size - boxSize) / 2;
+  const boxEnd = boxPos + boxSize;
+  const isInLogoBox = (row: number, col: number) => {
+    if (!hasLogo) return false;
+    const centerX = (col + margin + 0.5) * cellSize;
+    const centerY = (row + margin + 0.5) * cellSize;
+    return centerX >= boxPos && centerX <= boxEnd && centerY >= boxPos && centerY <= boxEnd;
+  };
 
   const segments: string[] = [];
   for (let row = 0; row < moduleCount; row++) {
     for (let col = 0; col < moduleCount; col++) {
-      if (!isDark(row, col)) continue;
+      if (!isDark(row, col) || isInLogoBox(row, col)) continue;
 
-      const top = isDark(row - 1, col);
-      const bottom = isDark(row + 1, col);
-      const left = isDark(row, col - 1);
-      const right = isDark(row, col + 1);
+      const top = isDark(row - 1, col) && !isInLogoBox(row - 1, col);
+      const bottom = isDark(row + 1, col) && !isInLogoBox(row + 1, col);
+      const left = isDark(row, col - 1) && !isInLogoBox(row, col - 1);
+      const right = isDark(row, col + 1) && !isInLogoBox(row, col + 1);
 
       const x = (col + margin) * cellSize - (left ? overlap : 0);
       const y = (row + margin) * cellSize - (top ? overlap : 0);
@@ -107,19 +124,16 @@ export async function buildQrSvgMarkup({
     }
   }
 
-  const isTransparentBg = bgColor === 'transparent';
-
   let logoMarkup = '';
-  if (logoUrl) {
-    const padding = logoSize * 0.18;
-    const boxSize = logoSize + padding * 2;
-    const boxPos = (size - boxSize) / 2;
+  if (hasLogo && logoUrl) {
     const imgPos = (size - logoSize) / 2;
     const boxRadius = boxSize * 0.25;
-    // The logo always sits on its own clean patch, even when the overall
-    // QR background is transparent, so it never blends into the modules.
-    const logoBackdropColor = isTransparentBg ? '#ffffff' : bgColor;
-    const boxMarkup = `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${logoBackdropColor}" />`;
+    // With an opaque background, paint a clean patch behind the logo for
+    // smooth rounded edges; with a transparent background, leave it as the
+    // genuinely empty hole the module exclusion above already created.
+    const boxMarkup = isTransparentBg
+      ? ''
+      : `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" />`;
 
     const inlineLogo = await buildInlineLogoMarkup(logoUrl, imgPos, imgPos, logoSize);
     const logoElement =

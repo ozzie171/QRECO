@@ -105,6 +105,22 @@ export default function RoundedQrCanvas({
     }
     ctx.fillStyle = fgColor;
 
+    // Modules whose center falls inside the logo's clearing box are left
+    // completely unpainted (not just covered by a patch on top), so the logo
+    // always sits in genuinely empty space — this keeps a transparent
+    // background truly transparent there too, instead of forcing a color.
+    const hasLogo = !!logoUrl;
+    const padding = logoSize * 0.18;
+    const boxSize = logoSize + padding * 2;
+    const boxPos = (size - boxSize) / 2;
+    const boxEnd = boxPos + boxSize;
+    const isInLogoBox = (row: number, col: number) => {
+      if (!hasLogo) return false;
+      const centerX = (col + margin + 0.5) * cellSize;
+      const centerY = (row + margin + 0.5) * cellSize;
+      return centerX >= boxPos && centerX <= boxEnd && centerY >= boxPos && centerY <= boxEnd;
+    };
+
     const fullRadius = cellSize * 0.5;
     // Touching edges are drawn slightly oversized so rounding/anti-aliasing
     // never leaves a hairline background seam between merged modules.
@@ -113,12 +129,12 @@ export default function RoundedQrCanvas({
     ctx.beginPath();
     for (let row = 0; row < moduleCount; row++) {
       for (let col = 0; col < moduleCount; col++) {
-        if (!isDark(row, col)) continue;
+        if (!isDark(row, col) || isInLogoBox(row, col)) continue;
 
-        const top = isDark(row - 1, col);
-        const bottom = isDark(row + 1, col);
-        const left = isDark(row, col - 1);
-        const right = isDark(row, col + 1);
+        const top = isDark(row - 1, col) && !isInLogoBox(row - 1, col);
+        const bottom = isDark(row + 1, col) && !isInLogoBox(row + 1, col);
+        const left = isDark(row, col - 1) && !isInLogoBox(row, col - 1);
+        const right = isDark(row, col + 1) && !isInLogoBox(row, col + 1);
 
         const x = (col + margin) * cellSize - (left ? overlap : 0);
         const y = (row + margin) * cellSize - (top ? overlap : 0);
@@ -137,23 +153,24 @@ export default function RoundedQrCanvas({
     }
     ctx.fill();
 
-    if (logoUrl) {
+    if (hasLogo) {
+      // With an opaque background, paint a clean patch behind the logo for
+      // smooth rounded edges; with a transparent background, leave it as the
+      // genuinely empty hole the module-skipping above already created.
+      if (!isTransparentBg) {
+        ctx.fillStyle = bgColor;
+        roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
+        ctx.fill();
+      }
+
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
         if (cancelled) return;
-        const padding = logoSize * 0.18;
-        const boxSize = logoSize + padding * 2;
-        const boxPos = (size - boxSize) / 2;
-        // The logo always sits on its own clean patch, even when the overall
-        // QR background is transparent, so it never blends into the modules.
-        ctx.fillStyle = isTransparentBg ? "#ffffff" : bgColor;
-        roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
-        ctx.fill();
         const imgPos = (size - logoSize) / 2;
         ctx.drawImage(img, imgPos, imgPos, logoSize, logoSize);
       };
-      img.src = logoUrl;
+      img.src = logoUrl!;
     }
 
     return () => {
