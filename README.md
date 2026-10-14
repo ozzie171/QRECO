@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# QRECO
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Çalışanlar için QR kodlu dijital kartvizit / profil sayfası yöneticisi.
+Frontend: React + TypeScript + Vite + Ant Design. Backend: Vercel
+Serverless Functions (`/api`). Veri ve dosyalar: Supabase (Postgres +
+Storage).
 
-Currently, two official plugins are available:
+## Kurulum
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. **Supabase projesi oluşturun** ([supabase.com](https://supabase.com) → New Project).
+2. Supabase Dashboard → **SQL Editor** içine [`supabase/schema.sql`](supabase/schema.sql) dosyasının içeriğini yapıştırıp çalıştırın.
+3. Supabase Dashboard → **Storage** → yeni bir bucket oluşturun: adı `uploads`, **Public bucket** seçeneğini açın.
+4. Supabase Dashboard → **Project Settings → API** sayfasından `Project URL` ve `service_role` anahtarını alın.
+5. Proje kök dizininde `.env.example` dosyasını `.env` olarak kopyalayıp bu değerleri girin:
+   ```bash
+   cp .env.example .env
+   ```
+6. Bağımlılıkları kurun:
+   ```bash
+   npm install
+   ```
+7. Vercel CLI ile yerel geliştirme (ilk seferinde `vercel link` ile projeyi bağlamanız istenecek):
+   ```bash
+   npm run dev
+   ```
 
-## React Compiler
+## Dağıtım (Deploy)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Proje bir Git reposuna push edildikten sonra Vercel'de "Import Project"
+ile bağlanır. Vercel proje ayarlarından **Environment Variables**
+kısmına `SUPABASE_URL` ve `SUPABASE_SERVICE_ROLE_KEY` eklenmelidir.
+Alt domain bağlamak için proje **Settings → Domains** kısmından
+istenen alt domain eklenir.
