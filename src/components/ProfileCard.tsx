@@ -160,7 +160,7 @@ export default function ProfileCard({ data, compact = false }: Props) {
         style={{ marginBottom: 16, display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
       />
       <Title level={compact ? 4 : 3} style={{ marginBottom: 0, color }}>
-        {fullName || 'İsimsiz Çalışan'}
+        {fullName || (lang === 'en' ? 'Unnamed Employee' : 'İsimsiz Çalışan')}
       </Title>
       {position && (
         <Text style={{ fontSize: compact ? 14 : 16, color, opacity: 0.75, display: 'block' }}>
@@ -240,12 +240,12 @@ export default function ProfileCard({ data, compact = false }: Props) {
           {mapsUrl && (
             <a href={mapsUrl} target="_blank" rel="noreferrer" style={actionButtonStyle}>
               <EnvironmentOutlined />
-              Yol Tarifi Al
+              {lang === 'en' ? 'Get Directions' : 'Yol Tarifi Al'}
             </a>
           )}
           <a href={vcardHref} style={actionButtonStyle}>
             <ContactsOutlined />
-            Rehbere Ekle
+            {lang === 'en' ? 'Add to Contacts' : 'Rehbere Ekle'}
           </a>
         </div>
 
