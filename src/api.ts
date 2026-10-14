@@ -44,3 +44,13 @@ export async function uploadLogo(file: File): Promise<string> {
   });
   return data.url;
 }
+
+export interface LogoLibraryItem {
+  name: string;
+  url: string;
+}
+
+export async function fetchLogos(): Promise<LogoLibraryItem[]> {
+  const { data } = await client.get<LogoLibraryItem[]>('/logos');
+  return data;
+}

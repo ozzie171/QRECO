@@ -34,10 +34,35 @@ function cellPathSegment(
   ].join(' ');
 }
 
+/** Fetches the logo's own SVG source and returns it as a self-contained
+ * nested <svg> block (viewBox preserved, no external references), so the
+ * downloaded QR code works fully offline in any viewer or design tool. */
+async function buildInlineLogoMarkup(logoUrl: string, x: number, y: number, size: number): Promise<string | null> {
+  try {
+    const response = await fetch(logoUrl);
+    if (!response.ok) return null;
+    const svgText = await response.text();
+    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    const root = doc.documentElement;
+    if (!root || root.nodeName.toLowerCase() !== 'svg') return null;
+
+    let viewBox = root.getAttribute('viewBox');
+    if (!viewBox) {
+      const w = parseFloat(root.getAttribute('width') || '');
+      const h = parseFloat(root.getAttribute('height') || '');
+      viewBox = w && h ? `0 0 ${w} ${h}` : '0 0 100 100';
+    }
+
+    return `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="${viewBox}">${root.innerHTML}</svg>`;
+  } catch {
+    return null;
+  }
+}
+
 /** Builds a self-contained <svg> markup string of the "blob" style QR code,
  * mirroring the corner-rounding algorithm used by RoundedQrCanvas so the
  * downloaded vector matches the on-screen preview. */
-export function buildQrSvgMarkup({
+export async function buildQrSvgMarkup({
   value,
   size,
   fgColor,
@@ -45,7 +70,7 @@ export function buildQrSvgMarkup({
   errorLevel,
   logoUrl,
   logoSize = 40,
-}: QrVectorOptions): string {
+}: QrVectorOptions): Promise<string> {
   const qr = QRCode.create(value, { errorCorrectionLevel: errorLevel });
   const modules = qr.modules;
   const moduleCount = modules.size;
@@ -89,7 +114,13 @@ export function buildQrSvgMarkup({
     const boxPos = (size - boxSize) / 2;
     const imgPos = (size - logoSize) / 2;
     const boxRadius = boxSize * 0.25;
-    logoMarkup = `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" /><image href="${logoUrl}" x="${imgPos}" y="${imgPos}" width="${logoSize}" height="${logoSize}" />`;
+    const boxMarkup = `<rect x="${boxPos}" y="${boxPos}" width="${boxSize}" height="${boxSize}" rx="${boxRadius}" ry="${boxRadius}" fill="${bgColor}" />`;
+
+    const inlineLogo = await buildInlineLogoMarkup(logoUrl, imgPos, imgPos, logoSize);
+    const logoElement =
+      inlineLogo ?? `<image href="${logoUrl}" x="${imgPos}" y="${imgPos}" width="${logoSize}" height="${logoSize}" />`;
+
+    logoMarkup = boxMarkup + logoElement;
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${bgColor}" /><path d="${segments.join(' ')}" fill="${fgColor}" />${logoMarkup}</svg>`;

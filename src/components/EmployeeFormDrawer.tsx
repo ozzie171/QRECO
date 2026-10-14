@@ -9,6 +9,7 @@ import {
   Upload,
   Avatar,
   ColorPicker,
+  Modal,
   Segmented,
   Slider,
   Switch,
@@ -25,7 +26,8 @@ import {
   FacebookOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { uploadPhoto, uploadLogo } from "../api";
+import { uploadPhoto, uploadLogo, fetchLogos } from "../api";
+import type { LogoLibraryItem } from "../api";
 import QrCodeCard from "./QrCodeCard";
 import ProfileCard from "./ProfileCard";
 import type { Employee, EmployeeInput, QrDesign, SocialLinks } from "../types";
@@ -90,6 +92,9 @@ export default function EmployeeFormDrawer({
   const [photoLoading, setPhotoLoading] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [logoLibraryOpen, setLogoLibraryOpen] = useState(false);
+  const [logoLibrary, setLogoLibrary] = useState<LogoLibraryItem[]>([]);
+  const [logoLibraryLoading, setLogoLibraryLoading] = useState(false);
   const values = Form.useWatch([], form);
 
   useEffect(() => {
@@ -131,6 +136,24 @@ export default function EmployeeFormDrawer({
       setLogoLoading(false);
     }
     return false;
+  };
+
+  const openLogoLibrary = async () => {
+    setLogoLibraryOpen(true);
+    setLogoLibraryLoading(true);
+    try {
+      const logos = await fetchLogos();
+      setLogoLibrary(logos);
+    } catch {
+      message.error("Logo kütüphanesi yüklenirken bir hata oluştu.");
+    } finally {
+      setLogoLibraryLoading(false);
+    }
+  };
+
+  const handleSelectLibraryLogo = (url: string) => {
+    form.setFieldValue(["qr", "logoUrl"], url);
+    setLogoLibraryOpen(false);
   };
 
   const handleFinish = async (fieldsValues: EmployeeInput) => {
@@ -416,6 +439,9 @@ export default function EmployeeFormDrawer({
                               Logo Yükle
                             </Button>
                           </Upload>
+                          <Button onClick={openLogoLibrary}>
+                            Mevcut Logolardan Seç
+                          </Button>
                           {values?.qr?.logoUrl && (
                             <Button
                               danger
@@ -493,6 +519,52 @@ export default function EmployeeFormDrawer({
           </div>
         </div>
       </div>
+
+      <Modal
+        title="Mevcut Logolardan Seç"
+        open={logoLibraryOpen}
+        onCancel={() => setLogoLibraryOpen(false)}
+        footer={null}
+      >
+        {logoLibraryLoading ? (
+          <Text type="secondary">Yükleniyor...</Text>
+        ) : logoLibrary.length === 0 ? (
+          <Text type="secondary">Henüz yüklenmiş bir logo yok.</Text>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 12,
+            }}
+          >
+            {logoLibrary.map((logo) => (
+              <button
+                key={logo.name}
+                type="button"
+                onClick={() => handleSelectLibraryLogo(logo.url)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 72,
+                  padding: 8,
+                  border: "1px solid #e8e8e8",
+                  borderRadius: 8,
+                  background: "#fafafa",
+                  cursor: "pointer",
+                }}
+              >
+                <img
+                  src={logo.url}
+                  alt={logo.name}
+                  style={{ maxWidth: "100%", maxHeight: "100%" }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
     </Drawer>
   );
 }
