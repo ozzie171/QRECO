@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Avatar, Space, Typography } from 'antd';
 import {
@@ -33,6 +34,9 @@ export interface ProfileCardData {
   website: string;
   photoUrl: string;
   address: string;
+  enPosition: string;
+  enAddress: string;
+  detectedLang: 'tr' | 'en';
   social: ProfileSocialLinks;
   textColor: string;
 }
@@ -40,6 +44,16 @@ export interface ProfileCardData {
 interface Props {
   data: ProfileCardData;
   compact?: boolean;
+}
+
+function getContrastText(hex: string): string {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return '#000000';
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? '#000000' : '#ffffff';
 }
 
 const SOCIAL_ICONS: { key: keyof ProfileSocialLinks; icon: ReactNode; label: string }[] = [
@@ -50,14 +64,17 @@ const SOCIAL_ICONS: { key: keyof ProfileSocialLinks; icon: ReactNode; label: str
 ];
 
 export default function ProfileCard({ data, compact = false }: Props) {
+  const [lang, setLang] = useState<'tr' | 'en'>(data.detectedLang || 'tr');
+  const hasEnglishVersion = !!(data.enPosition || data.enAddress);
+
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
   const color = data.textColor || '#1f1f1f';
-  const mapsUrl = data.address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}`
-    : '';
+  const position = lang === 'en' && data.enPosition ? data.enPosition : data.position;
+  const address = lang === 'en' && data.enAddress ? data.enAddress : data.address;
+  const mapsUrl = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : '';
   const social = data.social || { linkedin: '', instagram: '', twitter: '', facebook: '' };
   const activeSocial = SOCIAL_ICONS.filter((item) => social[item.key]);
-  const vcardHref = `/api/users/${data.id}/vcard`;
+  const vcardHref = `/api/users/${data.id}/vcard?lang=${lang}`;
 
   const actionButtonStyle = {
     display: 'inline-flex',
@@ -90,13 +107,13 @@ export default function ProfileCard({ data, compact = false }: Props) {
             external: true,
           }
         : null,
-      data.address
+      address
         ? {
             key: 'address',
             icon: <EnvironmentOutlined />,
             href: mapsUrl,
             label: 'Adres',
-            text: data.address,
+            text: address,
             external: true,
           }
         : null,
@@ -104,18 +121,50 @@ export default function ProfileCard({ data, compact = false }: Props) {
 
   return (
     <div style={{ maxWidth: 420, width: '100%', textAlign: 'center', color }}>
+      {hasEnglishVersion && (
+        <div
+          style={{
+            display: 'inline-flex',
+            marginBottom: compact ? 12 : 20,
+            border: `1px solid ${color}55`,
+            borderRadius: 999,
+            overflow: 'hidden',
+          }}
+        >
+          {(['tr', 'en'] as const).map((code) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              style={{
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: 0.5,
+                background: lang === code ? color : 'transparent',
+                color: lang === code ? getContrastText(color) : color,
+              }}
+            >
+              {code.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      )}
+
       <Avatar
         size={compact ? 72 : 120}
         src={data.photoUrl || undefined}
         icon={!data.photoUrl && <UserOutlined />}
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 16, display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
       />
       <Title level={compact ? 4 : 3} style={{ marginBottom: 0, color }}>
         {fullName || 'İsimsiz Çalışan'}
       </Title>
-      {data.position && (
+      {position && (
         <Text style={{ fontSize: compact ? 14 : 16, color, opacity: 0.75, display: 'block' }}>
-          {data.position}
+          {position}
         </Text>
       )}
 

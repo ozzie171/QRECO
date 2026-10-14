@@ -181,6 +181,7 @@ export default function EmployeeFormDrawer({
     address: values?.address ?? "",
     enPosition: values?.enPosition ?? "",
     enAddress: values?.enAddress ?? "",
+    detectedLang: employee?.detectedLang ?? "tr",
     social: { ...defaultSocial, ...values?.social },
     bgColorStart: values?.bgColorStart ?? "#f5f5f5",
     bgColorEnd: values?.bgColorEnd ?? "#e0e0e0",

@@ -51,6 +51,7 @@ export function rowToEmployee(row) {
     textColor: row.text_color,
     qr: { ...defaultQr, ...row.qr },
     scanCount: row.scan_count ?? 0,
+    detectedLang: 'tr',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -76,13 +77,29 @@ export function employeeInputToRow(body = {}) {
   };
 }
 
-/** Turkey (and requests Vercel can't geolocate, e.g. local dev) get the
- * default-language fields; everywhere else falls back to the English
- * overrides when the employee has provided them. */
-export function applyLocale(employee, req) {
+/** Only a hint for which language to show first: Turkey (and requests
+ * Vercel can't geolocate, e.g. local dev) default to Turkish; everywhere
+ * else defaults to English. The visitor can still switch languages
+ * themselves on the page — both the Turkish and English fields are always
+ * sent to the client so that toggle never needs another request. */
+export function detectLang(req) {
   const country = req.headers['x-vercel-ip-country'];
-  if (!country || country === 'TR') return employee;
+  if (!country || country === 'TR') return 'tr';
+  return 'en';
+}
 
+/** Resolves which language's text to actually use for a given request:
+ * an explicit ?lang= query param wins, otherwise falls back to the
+ * IP-based guess. Used by endpoints (like the vCard download) that render
+ * a single fixed-language document rather than letting the client toggle. */
+export function resolveRequestedLang(req) {
+  const requested = req.query?.lang;
+  if (requested === 'tr' || requested === 'en') return requested;
+  return detectLang(req);
+}
+
+export function pickLocalizedFields(employee, lang) {
+  if (lang !== 'en') return employee;
   return {
     ...employee,
     position: employee.enPosition || employee.position,

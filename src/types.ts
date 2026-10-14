@@ -32,8 +32,9 @@ export interface Employee {
   textColor: string;
   qr: QrDesign;
   scanCount: number;
+  detectedLang: 'tr' | 'en';
   createdAt: string;
   updatedAt: string;
 }
 
-export type EmployeeInput = Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'scanCount'>;
+export type EmployeeInput = Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'scanCount' | 'detectedLang'>;
