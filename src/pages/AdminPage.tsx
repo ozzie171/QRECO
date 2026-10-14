@@ -20,6 +20,7 @@ import {
   QrcodeOutlined,
   LinkOutlined,
   ScanOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
@@ -78,6 +79,32 @@ export default function AdminPage() {
       setDrawerOpen(false);
     } catch {
       message.error('Kaydetme sırasında bir hata oluştu.');
+    }
+  };
+
+  const handleDuplicate = async (employee: Employee) => {
+    try {
+      const duplicated = await createEmployee({
+        firstName: employee.firstName ? `${employee.firstName} (Kopya)` : employee.firstName,
+        lastName: employee.lastName,
+        email: employee.email,
+        position: employee.position,
+        phone: employee.phone,
+        website: employee.website,
+        photoUrl: employee.photoUrl,
+        address: employee.address,
+        social: employee.social,
+        bgColorStart: employee.bgColorStart,
+        bgColorEnd: employee.bgColorEnd,
+        textColor: employee.textColor,
+        qr: employee.qr,
+      });
+      setEmployees((prev) => [...prev, duplicated]);
+      message.success('Çalışan çoğaltıldı.');
+      setEditingEmployee(duplicated);
+      setDrawerOpen(true);
+    } catch {
+      message.error('Çoğaltma sırasında bir hata oluştu.');
     }
   };
 
@@ -181,6 +208,9 @@ export default function AdminPage() {
           </Tooltip>
           <Tooltip title="Düzenle">
             <Button icon={<EditOutlined />} onClick={() => openEdit(employee)} />
+          </Tooltip>
+          <Tooltip title="Çoğalt">
+            <Button icon={<CopyOutlined />} onClick={() => handleDuplicate(employee)} />
           </Tooltip>
           <Popconfirm
             title="Bu çalışanı silmek istediğinize emin misiniz?"
