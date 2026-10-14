@@ -1,12 +1,12 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import QRCode from 'qrcode';
+import { useEffect, useRef } from "react";
+import QRCode from "qrcode";
 
 export interface RoundedQrCanvasProps {
   value: string;
   size: number;
   fgColor: string;
   bgColor: string;
-  errorLevel: 'L' | 'M' | 'Q' | 'H';
+  errorLevel: "L" | "M" | "Q" | "H";
   logoUrl?: string;
   logoSize?: number;
 }
@@ -58,96 +58,103 @@ function blobRectPath(
   ctx.closePath();
 }
 
-const RoundedQrCanvas = forwardRef<HTMLCanvasElement, RoundedQrCanvasProps>(
-  ({ value, size, fgColor, bgColor, errorLevel, logoUrl, logoSize = 40 }, forwardedRef) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    useImperativeHandle(forwardedRef, () => canvasRef.current as HTMLCanvasElement);
+export default function RoundedQrCanvas({
+  value,
+  size,
+  fgColor,
+  bgColor,
+  errorLevel,
+  logoUrl,
+  logoSize = 40,
+}: RoundedQrCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      let cancelled = false;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cancelled = false;
 
-      const qr = QRCode.create(value, { errorCorrectionLevel: errorLevel });
-      const modules = qr.modules;
-      const moduleCount = modules.size;
-      const margin = 2;
-      const totalModules = moduleCount + margin * 2;
+    const qr = QRCode.create(value, { errorCorrectionLevel: errorLevel });
+    const modules = qr.modules;
+    const moduleCount = modules.size;
+    const margin = 2;
+    const totalModules = moduleCount + margin * 2;
 
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = size * dpr;
-      canvas.height = size * dpr;
-      canvas.style.width = `${size}px`;
-      canvas.style.height = `${size}px`;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const cellSize = size / totalModules;
-      const isDark = (row: number, col: number) =>
-        row >= 0 && col >= 0 && row < moduleCount && col < moduleCount && !!modules.get(row, col);
+    const cellSize = size / totalModules;
+    const isDark = (row: number, col: number) =>
+      row >= 0 &&
+      col >= 0 &&
+      row < moduleCount &&
+      col < moduleCount &&
+      !!modules.get(row, col);
 
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = fgColor;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = fgColor;
 
-      const fullRadius = cellSize * 0.5;
-      // Touching edges are drawn slightly oversized so rounding/anti-aliasing
-      // never leaves a hairline background seam between merged modules.
-      const overlap = cellSize * 0.08;
+    const fullRadius = cellSize * 0.5;
+    // Touching edges are drawn slightly oversized so rounding/anti-aliasing
+    // never leaves a hairline background seam between merged modules.
+    const overlap = cellSize * 0.08;
 
-      ctx.beginPath();
-      for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-          if (!isDark(row, col)) continue;
+    ctx.beginPath();
+    for (let row = 0; row < moduleCount; row++) {
+      for (let col = 0; col < moduleCount; col++) {
+        if (!isDark(row, col)) continue;
 
-          const top = isDark(row - 1, col);
-          const bottom = isDark(row + 1, col);
-          const left = isDark(row, col - 1);
-          const right = isDark(row, col + 1);
+        const top = isDark(row - 1, col);
+        const bottom = isDark(row + 1, col);
+        const left = isDark(row, col - 1);
+        const right = isDark(row, col + 1);
 
-          const x = (col + margin) * cellSize - (left ? overlap : 0);
-          const y = (row + margin) * cellSize - (top ? overlap : 0);
-          const w = cellSize + (left ? overlap : 0) + (right ? overlap : 0);
-          const h = cellSize + (top ? overlap : 0) + (bottom ? overlap : 0);
+        const x = (col + margin) * cellSize - (left ? overlap : 0);
+        const y = (row + margin) * cellSize - (top ? overlap : 0);
+        const w = cellSize + (left ? overlap : 0) + (right ? overlap : 0);
+        const h = cellSize + (top ? overlap : 0) + (bottom ? overlap : 0);
 
-          // A corner stays sharp (so neighboring modules melt together into one
-          // continuous blob) whenever either of its two adjacent edges is also dark.
-          const rTL = top || left ? 0 : fullRadius;
-          const rTR = top || right ? 0 : fullRadius;
-          const rBR = bottom || right ? 0 : fullRadius;
-          const rBL = bottom || left ? 0 : fullRadius;
+        // A corner stays sharp (so neighboring modules melt together into one
+        // continuous blob) whenever either of its two adjacent edges is also dark.
+        const rTL = top || left ? 0 : fullRadius;
+        const rTR = top || right ? 0 : fullRadius;
+        const rBR = bottom || right ? 0 : fullRadius;
+        const rBL = bottom || left ? 0 : fullRadius;
 
-          blobRectPath(ctx, x, y, w, h, rTL, rTR, rBR, rBL);
-        }
+        blobRectPath(ctx, x, y, w, h, rTL, rTR, rBR, rBL);
       }
-      ctx.fill();
+    }
+    ctx.fill();
 
-      if (logoUrl) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          if (cancelled) return;
-          const padding = logoSize * 0.18;
-          const boxSize = logoSize + padding * 2;
-          const boxPos = (size - boxSize) / 2;
-          ctx.fillStyle = bgColor;
-          roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
-          ctx.fill();
-          const imgPos = (size - logoSize) / 2;
-          ctx.drawImage(img, imgPos, imgPos, logoSize, logoSize);
-        };
-        img.src = logoUrl;
-      }
-
-      return () => {
-        cancelled = true;
+    if (logoUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        if (cancelled) return;
+        const padding = logoSize * 0.18;
+        const boxSize = logoSize + padding * 2;
+        const boxPos = (size - boxSize) / 2;
+        ctx.fillStyle = bgColor;
+        roundedRectPath(ctx, boxPos, boxPos, boxSize, boxSize, boxSize * 0.25);
+        ctx.fill();
+        const imgPos = (size - logoSize) / 2;
+        ctx.drawImage(img, imgPos, imgPos, logoSize, logoSize);
       };
-    }, [value, size, fgColor, bgColor, errorLevel, logoUrl, logoSize]);
+      img.src = logoUrl;
+    }
 
-    return <canvas ref={canvasRef} style={{ display: 'block' }} />;
-  },
-);
+    return () => {
+      cancelled = true;
+    };
+  }, [value, size, fgColor, bgColor, errorLevel, logoUrl, logoSize]);
 
-export default RoundedQrCanvas;
+  return <canvas ref={canvasRef} style={{ display: "block" }} />;
+}

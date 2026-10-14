@@ -9,6 +9,9 @@ function isPublicPath(pathname, method) {
   if (method === 'GET' && /^\/api\/users\/[^/]+$/.test(pathname)) {
     return true;
   }
+  if (method === 'GET' && /^\/api\/users\/[^/]+\/vcard$/.test(pathname)) {
+    return true;
+  }
   return false;
 }
 

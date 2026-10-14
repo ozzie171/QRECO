@@ -23,6 +23,7 @@ export interface ProfileSocialLinks {
 }
 
 export interface ProfileCardData {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -47,26 +48,6 @@ const SOCIAL_ICONS: { key: keyof ProfileSocialLinks; icon: ReactNode; label: str
   { key: 'facebook', icon: <FacebookOutlined />, label: 'Facebook' },
 ];
 
-function escapeVCardValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
-}
-
-function buildVCard(data: ProfileCardData, fullName: string): string {
-  const lines = [
-    'BEGIN:VCARD',
-    'VERSION:3.0',
-    `N:${escapeVCardValue(data.lastName)};${escapeVCardValue(data.firstName)};;;`,
-    `FN:${escapeVCardValue(fullName || 'İsimsiz Çalışan')}`,
-  ];
-  if (data.position) lines.push(`TITLE:${escapeVCardValue(data.position)}`);
-  if (data.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(data.phone)}`);
-  if (data.email) lines.push(`EMAIL:${escapeVCardValue(data.email)}`);
-  if (data.website) lines.push(`URL:${escapeVCardValue(data.website)}`);
-  if (data.address) lines.push(`ADR;TYPE=WORK:;;${escapeVCardValue(data.address)};;;;`);
-  lines.push('END:VCARD');
-  return lines.join('\r\n');
-}
-
 export default function ProfileCard({ data, compact = false }: Props) {
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
   const color = data.textColor || '#1f1f1f';
@@ -75,9 +56,7 @@ export default function ProfileCard({ data, compact = false }: Props) {
     : '';
   const social = data.social || { linkedin: '', instagram: '', twitter: '', facebook: '' };
   const activeSocial = SOCIAL_ICONS.filter((item) => social[item.key]);
-
-  const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(buildVCard(data, fullName))}`;
-  const vcardFileName = `${[data.firstName, data.lastName].filter(Boolean).join('-') || 'kisi'}.vcf`;
+  const vcardHref = `/api/users/${data.id}/vcard`;
 
   const actionButtonStyle = {
     display: 'inline-flex',
@@ -139,13 +118,6 @@ export default function ProfileCard({ data, compact = false }: Props) {
         </Text>
       )}
 
-      <div style={{ marginTop: compact ? 14 : 20 }}>
-        <a href={vcardHref} download={vcardFileName} style={actionButtonStyle}>
-          <ContactsOutlined />
-          Rehbere Ekle
-        </a>
-      </div>
-
       {contactRows.length > 0 && (
         <div
           style={{
@@ -205,52 +177,56 @@ export default function ProfileCard({ data, compact = false }: Props) {
         </div>
       )}
 
-      {(mapsUrl || activeSocial.length > 0) && (
-        <div
-          style={{
-            marginTop: compact ? 16 : 24,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: compact ? 12 : 16,
-          }}
-        >
+      <div
+        style={{
+          marginTop: compact ? 16 : 24,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: compact ? 12 : 16,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           {mapsUrl && (
             <a href={mapsUrl} target="_blank" rel="noreferrer" style={actionButtonStyle}>
               <EnvironmentOutlined />
               Yol Tarifi Al
             </a>
           )}
-
-          {activeSocial.length > 0 && (
-            <Space size={12}>
-              {activeSocial.map((item) => (
-                <a
-                  key={item.key}
-                  href={social[item.key]}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={item.label}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    border: `1px solid ${color}33`,
-                    background: `${color}1a`,
-                    color,
-                    fontSize: 16,
-                  }}
-                >
-                  {item.icon}
-                </a>
-              ))}
-            </Space>
-          )}
+          <a href={vcardHref} style={actionButtonStyle}>
+            <ContactsOutlined />
+            Rehbere Ekle
+          </a>
         </div>
-      )}
+
+        {activeSocial.length > 0 && (
+          <Space size={12}>
+            {activeSocial.map((item) => (
+              <a
+                key={item.key}
+                href={social[item.key]}
+                target="_blank"
+                rel="noreferrer"
+                title={item.label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: `1px solid ${color}33`,
+                  background: `${color}1a`,
+                  color,
+                  fontSize: 16,
+                }}
+              >
+                {item.icon}
+              </a>
+            ))}
+          </Space>
+        )}
+      </div>
     </div>
   );
 }

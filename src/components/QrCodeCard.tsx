@@ -1,7 +1,7 @@
-import { useRef } from 'react';
 import { Button, Space } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import RoundedQrCanvas from './RoundedQrCanvas';
+import { buildQrSvgMarkup } from '../lib/qrSvg';
 import type { Employee } from '../types';
 
 interface Props {
@@ -11,18 +11,28 @@ interface Props {
 }
 
 export default function QrCodeCard({ employee, size = 192, showDownload = true }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { qr } = employee;
   const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const errorLevel = qr.logoUrl ? 'M' : 'L';
 
   const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const link = document.createElement('a');
+    const svgMarkup = buildQrSvgMarkup({
+      value: profileUrl,
+      size,
+      fgColor: qr.fgColor,
+      bgColor: qr.bgColor,
+      errorLevel,
+      logoUrl: qr.logoUrl || undefined,
+      logoSize: qr.logoSize,
+    });
     const name = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'calisan';
-    link.download = `${name}-qr.png`;
-    link.href = canvas.toDataURL('image/png');
+    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${name}-qr.svg`;
+    link.href = url;
     link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -39,19 +49,18 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
         }}
       >
         <RoundedQrCanvas
-          ref={canvasRef}
           value={profileUrl}
           size={size}
           fgColor={qr.fgColor}
           bgColor={qr.bgColor}
           logoUrl={qr.logoUrl || undefined}
           logoSize={qr.logoSize}
-          errorLevel={qr.logoUrl ? 'M' : 'L'}
+          errorLevel={errorLevel}
         />
       </div>
       {showDownload && (
         <Button icon={<DownloadOutlined />} onClick={handleDownload}>
-          QR Kodu İndir
+          QR Kodu İndir (SVG)
         </Button>
       )}
     </Space>
