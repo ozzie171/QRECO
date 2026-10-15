@@ -51,7 +51,6 @@ export default function AdminPage() {
   const [cardEmployee, setCardEmployee] = useState<Employee | null>(null);
   const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [cardPreviewLoading, setCardPreviewLoading] = useState(false);
-  const [cardLogoUrl, setCardLogoUrl] = useState('');
   const [cardLogoLibraryOpen, setCardLogoLibraryOpen] = useState(false);
 
   const load = async () => {
@@ -121,7 +120,6 @@ export default function AdminPage() {
 
   const handlePreviewCard = async (employee: Employee) => {
     setCardEmployee(employee);
-    setCardLogoUrl(employee.qr.logoUrl);
     setCardPreviewUrl(null);
     setCardPreviewLoading(true);
     try {
@@ -137,7 +135,6 @@ export default function AdminPage() {
   const handleChangeCardLogo = async (url: string) => {
     setCardLogoLibraryOpen(false);
     if (!cardEmployee) return;
-    setCardLogoUrl(url);
     setCardPreviewLoading(true);
     try {
       const dataUrl = await buildProfileCardDataUrl(cardEmployee, { qrLogoUrl: url });
@@ -384,7 +381,6 @@ export default function AdminPage() {
         onCancel={() => {
           setCardEmployee(null);
           setCardPreviewUrl(null);
-          setCardLogoUrl('');
         }}
         destroyOnHidden
         footer={
