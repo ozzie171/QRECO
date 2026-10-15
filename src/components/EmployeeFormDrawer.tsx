@@ -10,7 +10,6 @@ import {
   Avatar,
   ColorPicker,
   Modal,
-  Segmented,
   Slider,
   Switch,
   Tabs,
@@ -43,7 +42,7 @@ interface Props {
 
 const defaultQr: QrDesign = {
   fgColor: "#000000",
-  bgColor: "#ffffff",
+  bgColor: "transparent",
   logoUrl: "",
   logoSize: 40,
   bordered: true,
@@ -161,7 +160,10 @@ export default function EmployeeFormDrawer({
   const handleFinish = async (fieldsValues: EmployeeInput) => {
     setSaving(true);
     try {
-      await onSubmit(fieldsValues);
+      await onSubmit({
+        ...fieldsValues,
+        qr: { ...fieldsValues.qr, fgColor: "#000000", bgColor: "transparent", shape: "square" },
+      });
     } finally {
       setSaving(false);
     }
@@ -410,49 +412,6 @@ export default function EmployeeFormDrawer({
                   label: "QR Tasarımı",
                   children: (
                     <>
-                      <Space.Compact block>
-                        <Form.Item
-                          label="QR Rengi"
-                          name={["qr", "fgColor"]}
-                          style={{ width: "50%" }}
-                          getValueFromEvent={(color) => toHex(color)}
-                        >
-                          <ColorPicker showText />
-                        </Form.Item>
-                        <Form.Item
-                          label="QR Arkaplan Rengi"
-                          name={["qr", "bgColor"]}
-                          style={{ width: "50%" }}
-                          getValueFromEvent={(color) => toHex(color)}
-                        >
-                          <ColorPicker
-                            showText
-                            disabled={values?.qr?.bgColor === "transparent"}
-                          />
-                        </Form.Item>
-                      </Space.Compact>
-
-                      <Form.Item label="Şeffaf Arkaplan">
-                        <Switch
-                          checked={values?.qr?.bgColor === "transparent"}
-                          onChange={(checked) =>
-                            form.setFieldValue(
-                              ["qr", "bgColor"],
-                              checked ? "transparent" : "#ffffff",
-                            )
-                          }
-                        />
-                      </Form.Item>
-
-                      <Form.Item label="Çerçeve Şekli" name={["qr", "shape"]}>
-                        <Segmented
-                          options={[
-                            { label: "Kare", value: "square" },
-                            { label: "Daire", value: "circle" },
-                          ]}
-                        />
-                      </Form.Item>
-
                       <Form.Item
                         label="Çerçeve Göster"
                         name={["qr", "bordered"]}
