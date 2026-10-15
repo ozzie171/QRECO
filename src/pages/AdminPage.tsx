@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
+import LogoLibraryModal from '../components/LogoLibraryModal';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
 import { downloadEmployeeQrSvg } from '../lib/qrSvg';
 import { buildProfileCardDataUrl, downloadProfileCardImage } from '../lib/profileCardImage';
@@ -50,6 +51,8 @@ export default function AdminPage() {
   const [cardEmployee, setCardEmployee] = useState<Employee | null>(null);
   const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [cardPreviewLoading, setCardPreviewLoading] = useState(false);
+  const [cardLogoUrl, setCardLogoUrl] = useState('');
+  const [cardLogoLibraryOpen, setCardLogoLibraryOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -118,10 +121,26 @@ export default function AdminPage() {
 
   const handlePreviewCard = async (employee: Employee) => {
     setCardEmployee(employee);
+    setCardLogoUrl(employee.qr.logoUrl);
     setCardPreviewUrl(null);
     setCardPreviewLoading(true);
     try {
-      const dataUrl = await buildProfileCardDataUrl(employee);
+      const dataUrl = await buildProfileCardDataUrl(employee, { qrLogoUrl: employee.qr.logoUrl });
+      setCardPreviewUrl(dataUrl);
+    } catch {
+      message.error('Kart önizlemesi oluşturulurken bir hata oluştu.');
+    } finally {
+      setCardPreviewLoading(false);
+    }
+  };
+
+  const handleChangeCardLogo = async (url: string) => {
+    setCardLogoLibraryOpen(false);
+    if (!cardEmployee) return;
+    setCardLogoUrl(url);
+    setCardPreviewLoading(true);
+    try {
+      const dataUrl = await buildProfileCardDataUrl(cardEmployee, { qrLogoUrl: url });
       setCardPreviewUrl(dataUrl);
     } catch {
       message.error('Kart önizlemesi oluşturulurken bir hata oluştu.');
@@ -365,11 +384,15 @@ export default function AdminPage() {
         onCancel={() => {
           setCardEmployee(null);
           setCardPreviewUrl(null);
+          setCardLogoUrl('');
         }}
         destroyOnHidden
         footer={
           cardPreviewUrl
             ? [
+                <Button key="logo" onClick={() => setCardLogoLibraryOpen(true)}>
+                  Logoyu Değiştir
+                </Button>,
                 <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownloadPreviewedCard}>
                   İndir
                 </Button>,
@@ -388,6 +411,12 @@ export default function AdminPage() {
           )}
         </div>
       </Modal>
+
+      <LogoLibraryModal
+        open={cardLogoLibraryOpen}
+        onClose={() => setCardLogoLibraryOpen(false)}
+        onSelect={handleChangeCardLogo}
+      />
     </Layout>
   );
 }

@@ -9,8 +9,6 @@ import {
   Upload,
   Avatar,
   ColorPicker,
-  Modal,
-  Popconfirm,
   Slider,
   Switch,
   Tabs,
@@ -24,13 +22,12 @@ import {
   InstagramOutlined,
   TwitterOutlined,
   FacebookOutlined,
-  CloseOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { uploadPhoto, uploadLogo, fetchLogos, deleteLogo } from "../api";
-import type { LogoLibraryItem } from "../api";
+import { uploadPhoto, uploadLogo } from "../api";
 import QrCodeCard from "./QrCodeCard";
 import ProfileCard from "./ProfileCard";
+import LogoLibraryModal from "./LogoLibraryModal";
 import type { Employee, EmployeeInput, QrDesign, SocialLinks } from "../types";
 
 const { Text } = Typography;
@@ -96,8 +93,6 @@ export default function EmployeeFormDrawer({
   const [logoLoading, setLogoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [logoLibraryOpen, setLogoLibraryOpen] = useState(false);
-  const [logoLibrary, setLogoLibrary] = useState<LogoLibraryItem[]>([]);
-  const [logoLibraryLoading, setLogoLibraryLoading] = useState(false);
   const values = Form.useWatch([], form);
 
   useEffect(() => {
@@ -141,32 +136,9 @@ export default function EmployeeFormDrawer({
     return false;
   };
 
-  const openLogoLibrary = async () => {
-    setLogoLibraryOpen(true);
-    setLogoLibraryLoading(true);
-    try {
-      const logos = await fetchLogos();
-      setLogoLibrary(logos);
-    } catch {
-      message.error("Logo kütüphanesi yüklenirken bir hata oluştu.");
-    } finally {
-      setLogoLibraryLoading(false);
-    }
-  };
-
   const handleSelectLibraryLogo = (url: string) => {
     form.setFieldValue(["qr", "logoUrl"], url);
     setLogoLibraryOpen(false);
-  };
-
-  const handleDeleteLibraryLogo = async (name: string) => {
-    try {
-      await deleteLogo(name);
-      setLogoLibrary((prev) => prev.filter((logo) => logo.name !== name));
-      message.success("Logo silindi.");
-    } catch {
-      message.error("Logo silinirken bir hata oluştu.");
-    }
   };
 
   const handleFinish = async (fieldsValues: EmployeeInput) => {
@@ -453,7 +425,7 @@ export default function EmployeeFormDrawer({
                               Logo Yükle
                             </Button>
                           </Upload>
-                          <Button onClick={openLogoLibrary}>
+                          <Button onClick={() => setLogoLibraryOpen(true)}>
                             Mevcut Logolardan Seç
                           </Button>
                           {values?.qr?.logoUrl && (
@@ -534,67 +506,11 @@ export default function EmployeeFormDrawer({
         </div>
       </div>
 
-      <Modal
-        title="Mevcut Logolardan Seç"
+      <LogoLibraryModal
         open={logoLibraryOpen}
-        onCancel={() => setLogoLibraryOpen(false)}
-        footer={null}
-      >
-        {logoLibraryLoading ? (
-          <Text type="secondary">Yükleniyor...</Text>
-        ) : logoLibrary.length === 0 ? (
-          <Text type="secondary">Henüz yüklenmiş bir logo yok.</Text>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 12,
-            }}
-          >
-            {logoLibrary.map((logo) => (
-              <div key={logo.name} style={{ position: "relative" }}>
-                <button
-                  type="button"
-                  onClick={() => handleSelectLibraryLogo(logo.url)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "100%",
-                    height: 72,
-                    padding: 8,
-                    border: "1px solid #e8e8e8",
-                    borderRadius: 8,
-                    background: "#fafafa",
-                    cursor: "pointer",
-                  }}
-                >
-                  <img
-                    src={logo.url}
-                    alt={logo.name}
-                    style={{ maxWidth: "100%", maxHeight: "100%" }}
-                  />
-                </button>
-                <Popconfirm
-                  title="Bu logo silinsin mi?"
-                  onConfirm={() => handleDeleteLibraryLogo(logo.name)}
-                  okText="Sil"
-                  cancelText="Vazgeç"
-                >
-                  <Button
-                    danger
-                    size="small"
-                    shape="circle"
-                    icon={<CloseOutlined />}
-                    style={{ position: "absolute", top: -8, right: -8 }}
-                  />
-                </Popconfirm>
-              </div>
-            ))}
-          </div>
-        )}
-      </Modal>
+        onClose={() => setLogoLibraryOpen(false)}
+        onSelect={handleSelectLibraryLogo}
+      />
     </Drawer>
   );
 }

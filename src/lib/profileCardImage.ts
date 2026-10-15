@@ -149,12 +149,19 @@ function drawQrOnCanvas(
   ctx.restore();
 }
 
+export interface ProfileCardOptions {
+  /** Overrides the logo embedded in the card's QR for this render only —
+   * lets the user swap it just for the exported card without touching the
+   * employee's own saved QR design. Pass '' to render with no logo at all. */
+  qrLogoUrl?: string;
+}
+
 /** Renders a shareable "profile card" (Full HD, 9:16): eco logo up top,
  * photo, name and position, a QR code (always on a white patch for
  * scannability regardless of the employee's own QR color settings), and the
  * company website at the very bottom. Returns a PNG data URL so callers can
  * either preview it or trigger a download from the same render. */
-export async function buildProfileCardDataUrl(employee: Employee): Promise<string> {
+export async function buildProfileCardDataUrl(employee: Employee, options: ProfileCardOptions = {}): Promise<string> {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
@@ -230,10 +237,11 @@ export async function buildProfileCardDataUrl(employee: Employee): Promise<strin
   }
 
   const { qr } = employee;
+  const qrLogoUrl = options.qrLogoUrl ?? qr.logoUrl;
   let logoImage: HTMLImageElement | null = null;
-  if (qr.logoUrl) {
+  if (qrLogoUrl) {
     try {
-      logoImage = await loadImage(qr.logoUrl);
+      logoImage = await loadImage(qrLogoUrl);
     } catch {
       logoImage = null;
     }
