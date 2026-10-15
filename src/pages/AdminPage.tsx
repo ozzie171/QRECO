@@ -200,8 +200,9 @@ export default function AdminPage() {
     {
       title: 'QR',
       key: 'qr',
+      align: 'center',
       render: (_, employee) =>
-        qrVisible ? <QrCodeCard employee={employee} size={64} showDownload={false} /> : null,
+        qrVisible ? <QrCodeCard employee={employee} size={140} showDownload={false} /> : null,
     },
     {
       title: 'Tarama Sayısı',
