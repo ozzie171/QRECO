@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [qrEmployee, setQrEmployee] = useState<Employee | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [qrVisible, setQrVisible] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -197,6 +198,12 @@ export default function AdminPage() {
       ),
     },
     {
+      title: 'QR',
+      key: 'qr',
+      render: (_, employee) =>
+        qrVisible ? <QrCodeCard employee={employee} size={64} showDownload={false} /> : null,
+    },
+    {
       title: 'Tarama Sayısı',
       dataIndex: 'scanCount',
       key: 'scanCount',
@@ -219,9 +226,11 @@ export default function AdminPage() {
               onClick={() => window.open(`/profile/${employee.id}`, '_blank')}
             />
           </Tooltip>
-          <Tooltip title="QR Kodu Görüntüle">
-            <Button icon={<QrcodeOutlined />} onClick={() => setQrEmployee(employee)} />
-          </Tooltip>
+          {!qrVisible && (
+            <Tooltip title="QR Kodu Görüntüle">
+              <Button icon={<QrcodeOutlined />} onClick={() => setQrEmployee(employee)} />
+            </Tooltip>
+          )}
           <Tooltip title="QR Kodu İndir">
             <Button
               icon={<DownloadOutlined />}
@@ -256,9 +265,14 @@ export default function AdminPage() {
         <Title level={3} style={{ color: '#fff', margin: 0 }}>
           QRECO · Çalışan QR Yönetimi
         </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Yeni Çalışan Ekle
-        </Button>
+        <Space>
+          <Button icon={<QrcodeOutlined />} onClick={() => setQrVisible((v) => !v)}>
+            {qrVisible ? "QR'ları Gizle" : "QR'ları Göster"}
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Yeni Çalışan Ekle
+          </Button>
+        </Space>
       </Header>
       <Content style={{ padding: 24 }}>
         <Table
