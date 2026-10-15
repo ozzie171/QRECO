@@ -52,9 +52,7 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
           display: 'inline-block',
           borderRadius: qr.shape === 'circle' ? 999 : 16,
           overflow: 'hidden',
-          backgroundImage:
-            'conic-gradient(#a6a6a6 90deg, #cfcfcf 90deg 180deg, #a6a6a6 180deg 270deg, #cfcfcf 270deg)',
-          backgroundSize: '20px 20px',
+          background: '#bfbfbf',
         }}
       >
         <div
