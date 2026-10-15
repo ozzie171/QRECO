@@ -22,11 +22,13 @@ import {
   ScanOutlined,
   CopyOutlined,
   DownloadOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
 import { downloadEmployeeQrSvg } from '../lib/qrSvg';
+import { downloadProfileCardImage } from '../lib/profileCardImage';
 import { withHttpProtocol } from '../lib/url';
 import type { Employee, EmployeeInput } from '../types';
 
@@ -41,6 +43,7 @@ export default function AdminPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [qrEmployee, setQrEmployee] = useState<Employee | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingCardId, setDownloadingCardId] = useState<string | null>(null);
   const [qrVisible, setQrVisible] = useState(true);
 
   const load = async () => {
@@ -94,6 +97,17 @@ export default function AdminPage() {
       message.error('QR kodu indirilirken bir hata oluştu.');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadProfileCard = async (employee: Employee) => {
+    setDownloadingCardId(employee.id);
+    try {
+      await downloadProfileCardImage(employee);
+    } catch {
+      message.error('Profil kartı indirilirken bir hata oluştu.');
+    } finally {
+      setDownloadingCardId(null);
     }
   };
 
@@ -237,6 +251,13 @@ export default function AdminPage() {
               icon={<DownloadOutlined />}
               loading={downloadingId === employee.id}
               onClick={() => handleDownloadQr(employee)}
+            />
+          </Tooltip>
+          <Tooltip title="QR'lı Profil Görseli İndir">
+            <Button
+              icon={<IdcardOutlined />}
+              loading={downloadingCardId === employee.id}
+              onClick={() => handleDownloadProfileCard(employee)}
             />
           </Tooltip>
           <Tooltip title="Düzenle">
