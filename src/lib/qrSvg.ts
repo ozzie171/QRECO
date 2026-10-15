@@ -166,7 +166,9 @@ export async function downloadEmployeeQrSvg(employee: Employee, size = 320): Pro
     size,
     fgColor: qr.fgColor,
     bgColor: qr.bgColor,
-    errorLevel: qr.logoUrl ? 'M' : 'L',
+    // See QrCodeCard's errorLevel comment: a logo needs the "H" tier or the
+    // blanked-out area alone exceeds what "M" can correct and scanning fails.
+    errorLevel: qr.logoUrl ? 'H' : 'L',
     logoUrl: qr.logoUrl || undefined,
     logoSize: scaledLogoSize,
   });

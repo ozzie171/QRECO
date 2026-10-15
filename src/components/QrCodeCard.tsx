@@ -21,7 +21,11 @@ const REFERENCE_SIZE = 176;
 export default function QrCodeCard({ employee, size = 192, showDownload = true }: Props) {
   const { qr } = employee;
   const profileUrl = `${window.location.origin}/profile/${employee.id}`;
-  const errorLevel = qr.logoUrl ? 'M' : 'L';
+  // A logo blanks out a chunk of the modules in the middle of the code, so a
+  // logo'd QR needs the high error-correction tier — at the default "M" tier
+  // that hole alone exceeds the correctable error budget and real phone
+  // cameras fail to scan it (verified by decoding a rendered copy with jsQR).
+  const errorLevel = qr.logoUrl ? 'H' : 'L';
   const [downloading, setDownloading] = useState(false);
   const { message } = App.useApp();
   const scale = size / REFERENCE_SIZE;
