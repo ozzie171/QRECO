@@ -1,4 +1,5 @@
 import QRCode from 'qrcode';
+import type { Employee } from '../types';
 
 export interface QrVectorOptions {
   value: string;
@@ -145,4 +146,29 @@ export async function buildQrSvgMarkup({
   const bgMarkup = isTransparentBg ? '' : `<rect width="${size}" height="${size}" fill="${bgColor}" />`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${bgMarkup}<path d="${segments.join(' ')}" fill="${fgColor}" />${logoMarkup}</svg>`;
+}
+
+/** Builds and triggers a browser download of an employee's QR code as an
+ * SVG file, used both by the per-employee QR preview card and the admin
+ * table's quick-download action so the two stay in sync. */
+export async function downloadEmployeeQrSvg(employee: Employee, size = 320): Promise<void> {
+  const { qr } = employee;
+  const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const svgMarkup = await buildQrSvgMarkup({
+    value: profileUrl,
+    size,
+    fgColor: qr.fgColor,
+    bgColor: qr.bgColor,
+    errorLevel: qr.logoUrl ? 'M' : 'L',
+    logoUrl: qr.logoUrl || undefined,
+    logoSize: qr.logoSize,
+  });
+  const name = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'calisan';
+  const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = `${name}-qr.svg`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }

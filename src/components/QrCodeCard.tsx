@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { App, Button, Space } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import RoundedQrCanvas from './RoundedQrCanvas';
-import { buildQrSvgMarkup } from '../lib/qrSvg';
+import { downloadEmployeeQrSvg } from '../lib/qrSvg';
 import type { Employee } from '../types';
 
 interface Props {
@@ -21,23 +21,7 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const svgMarkup = await buildQrSvgMarkup({
-        value: profileUrl,
-        size,
-        fgColor: qr.fgColor,
-        bgColor: qr.bgColor,
-        errorLevel,
-        logoUrl: qr.logoUrl || undefined,
-        logoSize: qr.logoSize,
-      });
-      const name = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'calisan';
-      const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${name}-qr.svg`;
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
+      await downloadEmployeeQrSvg(employee, size);
     } catch {
       message.error('QR kodu indirilirken bir hata oluştu.');
     } finally {

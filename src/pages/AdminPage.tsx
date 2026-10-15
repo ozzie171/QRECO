@@ -21,10 +21,12 @@ import {
   LinkOutlined,
   ScanOutlined,
   CopyOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
+import { downloadEmployeeQrSvg } from '../lib/qrSvg';
 import { withHttpProtocol } from '../lib/url';
 import type { Employee, EmployeeInput } from '../types';
 
@@ -38,6 +40,7 @@ export default function AdminPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [qrEmployee, setQrEmployee] = useState<Employee | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -79,6 +82,17 @@ export default function AdminPage() {
       setDrawerOpen(false);
     } catch {
       message.error('Kaydetme sırasında bir hata oluştu.');
+    }
+  };
+
+  const handleDownloadQr = async (employee: Employee) => {
+    setDownloadingId(employee.id);
+    try {
+      await downloadEmployeeQrSvg(employee);
+    } catch {
+      message.error('QR kodu indirilirken bir hata oluştu.');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -207,6 +221,13 @@ export default function AdminPage() {
           </Tooltip>
           <Tooltip title="QR Kodu Görüntüle">
             <Button icon={<QrcodeOutlined />} onClick={() => setQrEmployee(employee)} />
+          </Tooltip>
+          <Tooltip title="QR Kodu İndir">
+            <Button
+              icon={<DownloadOutlined />}
+              loading={downloadingId === employee.id}
+              onClick={() => handleDownloadQr(employee)}
+            />
           </Tooltip>
           <Tooltip title="Düzenle">
             <Button icon={<EditOutlined />} onClick={() => openEdit(employee)} />
