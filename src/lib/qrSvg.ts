@@ -148,12 +148,19 @@ export async function buildQrSvgMarkup({
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${bgMarkup}<path d="${segments.join(' ')}" fill="${fgColor}" />${logoMarkup}</svg>`;
 }
 
+// Keep in sync with QrCodeCard's own REFERENCE_SIZE: logoSize is tuned by eye
+// against that canvas size, so it must be scaled by size/REFERENCE whenever
+// the actual render size differs (e.g. a small inline thumbnail or a larger
+// download), or the logo ends up disproportionate to the QR.
+const LOGO_SIZE_REFERENCE = 176;
+
 /** Builds and triggers a browser download of an employee's QR code as an
  * SVG file, used both by the per-employee QR preview card and the admin
  * table's quick-download action so the two stay in sync. */
 export async function downloadEmployeeQrSvg(employee: Employee, size = 320): Promise<void> {
   const { qr } = employee;
   const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const scaledLogoSize = qr.logoUrl ? qr.logoSize * (size / LOGO_SIZE_REFERENCE) : qr.logoSize;
   const svgMarkup = await buildQrSvgMarkup({
     value: profileUrl,
     size,
@@ -161,7 +168,7 @@ export async function downloadEmployeeQrSvg(employee: Employee, size = 320): Pro
     bgColor: qr.bgColor,
     errorLevel: qr.logoUrl ? 'M' : 'L',
     logoUrl: qr.logoUrl || undefined,
-    logoSize: qr.logoSize,
+    logoSize: scaledLogoSize,
   });
   const name = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'calisan';
   const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });

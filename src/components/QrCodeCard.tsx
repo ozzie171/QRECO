@@ -11,12 +11,22 @@ interface Props {
   showDownload?: boolean;
 }
 
+// logoSize/padding are tuned by eye against this reference canvas size (the
+// size EmployeeFormDrawer's preview uses); scaling them by size/REFERENCE
+// keeps the logo's proportion to the QR consistent at any render size,
+// instead of a fixed-size logo swallowing a small canvas like the table's
+// inline thumbnail.
+const REFERENCE_SIZE = 176;
+
 export default function QrCodeCard({ employee, size = 192, showDownload = true }: Props) {
   const { qr } = employee;
   const profileUrl = `${window.location.origin}/profile/${employee.id}`;
   const errorLevel = qr.logoUrl ? 'M' : 'L';
   const [downloading, setDownloading] = useState(false);
   const { message } = App.useApp();
+  const scale = size / REFERENCE_SIZE;
+  const scaledLogoSize = qr.logoUrl ? qr.logoSize * scale : qr.logoSize;
+  const padding = Math.round(20 * scale);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -34,7 +44,7 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
       <div
         style={{
           display: 'inline-block',
-          padding: 20,
+          padding,
           background: qr.bgColor,
           borderRadius: qr.shape === 'circle' ? 999 : 16,
           border: qr.bordered ? '1px solid #e8e8e8' : 'none',
@@ -48,7 +58,7 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
           fgColor={qr.fgColor}
           bgColor={qr.bgColor}
           logoUrl={qr.logoUrl || undefined}
-          logoSize={qr.logoSize}
+          logoSize={scaledLogoSize}
           errorLevel={errorLevel}
         />
       </div>
