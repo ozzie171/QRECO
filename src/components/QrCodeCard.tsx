@@ -50,23 +50,34 @@ export default function QrCodeCard({ employee, size = 192, showDownload = true }
       <div
         style={{
           display: 'inline-block',
-          padding: 20,
-          background: qr.bgColor,
           borderRadius: qr.shape === 'circle' ? 999 : 16,
-          border: qr.bordered ? '1px solid #e8e8e8' : 'none',
-          boxShadow: qr.bordered ? '0 2px 10px rgba(0,0,0,0.08)' : 'none',
-          lineHeight: 0,
+          overflow: 'hidden',
+          backgroundImage:
+            'conic-gradient(#a6a6a6 90deg, #cfcfcf 90deg 180deg, #a6a6a6 180deg 270deg, #cfcfcf 270deg)',
+          backgroundSize: '20px 20px',
         }}
       >
-        <RoundedQrCanvas
-          value={profileUrl}
-          size={size}
-          fgColor={qr.fgColor}
-          bgColor={qr.bgColor}
-          logoUrl={qr.logoUrl || undefined}
-          logoSize={qr.logoSize}
-          errorLevel={errorLevel}
-        />
+        <div
+          style={{
+            display: 'inline-block',
+            padding: 20,
+            background: qr.bgColor,
+            borderRadius: qr.shape === 'circle' ? 999 : 16,
+            border: qr.bordered ? '1px solid #e8e8e8' : 'none',
+            boxShadow: qr.bordered ? '0 2px 10px rgba(0,0,0,0.08)' : 'none',
+            lineHeight: 0,
+          }}
+        >
+          <RoundedQrCanvas
+            value={profileUrl}
+            size={size}
+            fgColor={qr.fgColor}
+            bgColor={qr.bgColor}
+            logoUrl={qr.logoUrl || undefined}
+            logoSize={qr.logoSize}
+            errorLevel={errorLevel}
+          />
+        </div>
       </div>
       {showDownload && (
         <Button icon={<DownloadOutlined />} onClick={handleDownload} loading={downloading}>
