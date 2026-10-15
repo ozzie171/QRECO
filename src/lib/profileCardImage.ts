@@ -1,11 +1,22 @@
 import QRCode from 'qrcode';
 import type { Employee } from '../types';
 
-const CARD_WIDTH = 480;
-const CARD_HEIGHT = 680;
-const AVATAR_SIZE = 160;
-const QR_SIZE = 220;
-const QR_BOX_PADDING = 20;
+// Full HD resolution in portrait (9:16) orientation.
+const CARD_WIDTH = 1080;
+const CARD_HEIGHT = 1920;
+
+const LOGO_WIDTH = 420;
+const LOGO_ASPECT = 224.82 / 74.66; // eco-logo-beyaz.svg's own viewBox ratio
+const LOGO_TOP = 120;
+
+const AVATAR_SIZE = 340;
+const AVATAR_TOP = LOGO_TOP + LOGO_WIDTH / LOGO_ASPECT + 110;
+
+const QR_SIZE = 460;
+const QR_BOX_PADDING = 40;
+const QR_BOX_SIZE = QR_SIZE + QR_BOX_PADDING * 2;
+
+const WEBSITE_BOTTOM_MARGIN = 90;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -138,10 +149,12 @@ function drawQrOnCanvas(
   ctx.restore();
 }
 
-/** Builds and downloads a shareable PNG "profile card": photo, name and
- * position over the employee's own page colors, with a QR code (always on
- * a white patch for scannability) underneath. */
-export async function downloadProfileCardImage(employee: Employee): Promise<void> {
+/** Renders a shareable "profile card" (Full HD, 9:16): eco logo up top,
+ * photo, name and position, a QR code (always on a white patch for
+ * scannability regardless of the employee's own QR color settings), and the
+ * company website at the very bottom. Returns a PNG data URL so callers can
+ * either preview it or trigger a download from the same render. */
+export async function buildProfileCardDataUrl(employee: Employee): Promise<string> {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
@@ -156,8 +169,17 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
 
   const textColor = employee.textColor || '#1f1f1f';
   const centerX = CARD_WIDTH / 2;
-  const avatarY = 72;
-  const avatarCenterY = avatarY + AVATAR_SIZE / 2;
+
+  // eco wordmark at the top.
+  try {
+    const logo = await loadImage(`${window.location.origin}/eco-logo-beyaz.svg`);
+    const logoHeight = LOGO_WIDTH / LOGO_ASPECT;
+    ctx.drawImage(logo, centerX - LOGO_WIDTH / 2, LOGO_TOP, LOGO_WIDTH, logoHeight);
+  } catch {
+    // Logo is a nice-to-have; the card still works without it.
+  }
+
+  const avatarCenterY = AVATAR_TOP + AVATAR_SIZE / 2;
 
   let photo: HTMLImageElement | null = null;
   if (employee.photoUrl) {
@@ -180,7 +202,7 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
     ctx.drawImage(photo, centerX - w / 2, avatarCenterY - h / 2, w, h);
   } else {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillRect(centerX - AVATAR_SIZE / 2, avatarY, AVATAR_SIZE, AVATAR_SIZE);
+    ctx.fillRect(centerX - AVATAR_SIZE / 2, AVATAR_TOP, AVATAR_SIZE, AVATAR_SIZE);
   }
   ctx.restore();
 
@@ -188,7 +210,7 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
     ctx.fillStyle = textColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '600 56px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = '600 120px -apple-system, "Segoe UI", sans-serif';
     ctx.fillText(getInitials(employee.firstName, employee.lastName), centerX, avatarCenterY);
   }
 
@@ -196,14 +218,14 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
   ctx.fillStyle = textColor;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = '700 30px -apple-system, "Segoe UI", sans-serif';
-  const nameY = avatarY + AVATAR_SIZE + 52;
+  ctx.font = '700 64px -apple-system, "Segoe UI", sans-serif';
+  const nameY = AVATAR_TOP + AVATAR_SIZE + 90;
   ctx.fillText(fullName || 'İsimsiz Çalışan', centerX, nameY);
 
   if (employee.position) {
-    ctx.font = '400 20px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = '400 38px -apple-system, "Segoe UI", sans-serif';
     ctx.globalAlpha = 0.8;
-    ctx.fillText(employee.position, centerX, nameY + 32);
+    ctx.fillText(employee.position, centerX, nameY + 56);
     ctx.globalAlpha = 1;
   }
 
@@ -218,11 +240,11 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
   }
   const scaledLogoSize = logoImage ? qr.logoSize * (QR_SIZE / 176) : qr.logoSize;
 
-  const boxSize = QR_SIZE + QR_BOX_PADDING * 2;
-  const boxX = centerX - boxSize / 2;
-  const boxY = CARD_HEIGHT - boxSize - 56;
+  const websiteY = CARD_HEIGHT - WEBSITE_BOTTOM_MARGIN;
+  const boxY = websiteY - 70 - QR_BOX_SIZE;
+  const boxX = centerX - QR_BOX_SIZE / 2;
   ctx.fillStyle = '#ffffff';
-  roundedRectPath(ctx, boxX, boxY, boxSize, boxSize, 20);
+  roundedRectPath(ctx, boxX, boxY, QR_BOX_SIZE, QR_BOX_SIZE, 36);
   ctx.fill();
 
   const profileUrl = `${window.location.origin}/profile/${employee.id}`;
@@ -238,8 +260,24 @@ export async function downloadProfileCardImage(employee: Employee): Promise<void
     scaledLogoSize,
   );
 
+  if (employee.website) {
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = '600 34px -apple-system, "Segoe UI", sans-serif';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText(employee.website, centerX, websiteY);
+    ctx.globalAlpha = 1;
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
+/** Builds and downloads the profile card PNG described in
+ * buildProfileCardDataUrl. */
+export async function downloadProfileCardImage(employee: Employee): Promise<void> {
+  const dataUrl = await buildProfileCardDataUrl(employee);
   const name = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'calisan';
-  const dataUrl = canvas.toDataURL('image/png');
   const link = document.createElement('a');
   link.download = `${name}-profil-karti.png`;
   link.href = dataUrl;

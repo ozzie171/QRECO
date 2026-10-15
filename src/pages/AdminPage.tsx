@@ -10,6 +10,7 @@ import {
   Popconfirm,
   Modal,
   Tooltip,
+  Spin,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -23,12 +24,13 @@ import {
   CopyOutlined,
   DownloadOutlined,
   IdcardOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
 import { downloadEmployeeQrSvg } from '../lib/qrSvg';
-import { downloadProfileCardImage } from '../lib/profileCardImage';
+import { buildProfileCardDataUrl, downloadProfileCardImage } from '../lib/profileCardImage';
 import { withHttpProtocol } from '../lib/url';
 import type { Employee, EmployeeInput } from '../types';
 
@@ -45,6 +47,9 @@ export default function AdminPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingCardId, setDownloadingCardId] = useState<string | null>(null);
   const [qrVisible, setQrVisible] = useState(true);
+  const [cardEmployee, setCardEmployee] = useState<Employee | null>(null);
+  const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
+  const [cardPreviewLoading, setCardPreviewLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -109,6 +114,29 @@ export default function AdminPage() {
     } finally {
       setDownloadingCardId(null);
     }
+  };
+
+  const handlePreviewCard = async (employee: Employee) => {
+    setCardEmployee(employee);
+    setCardPreviewUrl(null);
+    setCardPreviewLoading(true);
+    try {
+      const dataUrl = await buildProfileCardDataUrl(employee);
+      setCardPreviewUrl(dataUrl);
+    } catch {
+      message.error('Kart önizlemesi oluşturulurken bir hata oluştu.');
+    } finally {
+      setCardPreviewLoading(false);
+    }
+  };
+
+  const handleDownloadPreviewedCard = () => {
+    if (!cardEmployee || !cardPreviewUrl) return;
+    const name = [cardEmployee.firstName, cardEmployee.lastName].filter(Boolean).join('-') || 'calisan';
+    const link = document.createElement('a');
+    link.download = `${name}-profil-karti.png`;
+    link.href = cardPreviewUrl;
+    link.click();
   };
 
   const handleDuplicate = async (employee: Employee) => {
@@ -253,6 +281,9 @@ export default function AdminPage() {
               onClick={() => handleDownloadQr(employee)}
             />
           </Tooltip>
+          <Tooltip title="Kartı Görüntüle">
+            <Button icon={<EyeOutlined />} onClick={() => handlePreviewCard(employee)} />
+          </Tooltip>
           <Tooltip title="QR'lı Profil Görseli İndir">
             <Button
               icon={<IdcardOutlined />}
@@ -326,6 +357,36 @@ export default function AdminPage() {
             <QrCodeCard employee={qrEmployee} size={220} />
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title={cardEmployee ? `${cardEmployee.firstName} ${cardEmployee.lastName} · Profil Kartı` : ''}
+        open={!!cardEmployee}
+        onCancel={() => {
+          setCardEmployee(null);
+          setCardPreviewUrl(null);
+        }}
+        destroyOnHidden
+        footer={
+          cardPreviewUrl
+            ? [
+                <Button key="download" type="primary" icon={<DownloadOutlined />} onClick={handleDownloadPreviewedCard}>
+                  İndir
+                </Button>,
+              ]
+            : null
+        }
+      >
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 16, minHeight: 200, alignItems: 'center' }}>
+          {cardPreviewLoading && <Spin />}
+          {cardPreviewUrl && (
+            <img
+              src={cardPreviewUrl}
+              alt="Profil kartı önizlemesi"
+              style={{ maxHeight: '70vh', maxWidth: '100%', borderRadius: 12 }}
+            />
+          )}
+        </div>
       </Modal>
     </Layout>
   );
