@@ -54,3 +54,7 @@ export async function fetchLogos(): Promise<LogoLibraryItem[]> {
   const { data } = await client.get<LogoLibraryItem[]>('/logos');
   return data;
 }
+
+export async function deleteLogo(name: string): Promise<void> {
+  await client.delete('/logos', { params: { name } });
+}

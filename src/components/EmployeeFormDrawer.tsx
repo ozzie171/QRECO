@@ -10,6 +10,7 @@ import {
   Avatar,
   ColorPicker,
   Modal,
+  Popconfirm,
   Slider,
   Switch,
   Tabs,
@@ -23,9 +24,10 @@ import {
   InstagramOutlined,
   TwitterOutlined,
   FacebookOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { uploadPhoto, uploadLogo, fetchLogos } from "../api";
+import { uploadPhoto, uploadLogo, fetchLogos, deleteLogo } from "../api";
 import type { LogoLibraryItem } from "../api";
 import QrCodeCard from "./QrCodeCard";
 import ProfileCard from "./ProfileCard";
@@ -155,6 +157,16 @@ export default function EmployeeFormDrawer({
   const handleSelectLibraryLogo = (url: string) => {
     form.setFieldValue(["qr", "logoUrl"], url);
     setLogoLibraryOpen(false);
+  };
+
+  const handleDeleteLibraryLogo = async (name: string) => {
+    try {
+      await deleteLogo(name);
+      setLogoLibrary((prev) => prev.filter((logo) => logo.name !== name));
+      message.success("Logo silindi.");
+    } catch {
+      message.error("Logo silinirken bir hata oluştu.");
+    }
   };
 
   const handleFinish = async (fieldsValues: EmployeeInput) => {
@@ -541,28 +553,44 @@ export default function EmployeeFormDrawer({
             }}
           >
             {logoLibrary.map((logo) => (
-              <button
-                key={logo.name}
-                type="button"
-                onClick={() => handleSelectLibraryLogo(logo.url)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: 72,
-                  padding: 8,
-                  border: "1px solid #e8e8e8",
-                  borderRadius: 8,
-                  background: "#fafafa",
-                  cursor: "pointer",
-                }}
-              >
-                <img
-                  src={logo.url}
-                  alt={logo.name}
-                  style={{ maxWidth: "100%", maxHeight: "100%" }}
-                />
-              </button>
+              <div key={logo.name} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectLibraryLogo(logo.url)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: 72,
+                    padding: 8,
+                    border: "1px solid #e8e8e8",
+                    borderRadius: 8,
+                    background: "#fafafa",
+                    cursor: "pointer",
+                  }}
+                >
+                  <img
+                    src={logo.url}
+                    alt={logo.name}
+                    style={{ maxWidth: "100%", maxHeight: "100%" }}
+                  />
+                </button>
+                <Popconfirm
+                  title="Bu logo silinsin mi?"
+                  onConfirm={() => handleDeleteLibraryLogo(logo.name)}
+                  okText="Sil"
+                  cancelText="Vazgeç"
+                >
+                  <Button
+                    danger
+                    size="small"
+                    shape="circle"
+                    icon={<CloseOutlined />}
+                    style={{ position: "absolute", top: -8, right: -8 }}
+                  />
+                </Popconfirm>
+              </div>
             ))}
           </div>
         )}
