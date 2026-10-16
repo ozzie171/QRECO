@@ -10,12 +10,17 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSelect: (url: string) => void;
+  /** Raise above another already-open Modal (e.g. the profile card preview)
+   * that this picker is opened from — antd's own auto z-index stacking
+   * doesn't reliably place a Modal opened from inside another Modal's
+   * content on top, so callers nesting this inside one pass a higher value. */
+  zIndex?: number;
 }
 
 /** Shared "pick a previously uploaded logo" picker, used both by the QR
  * design tab (employee's own QR logo) and the profile card preview (a
  * one-off logo just for that exported card). */
-export default function LogoLibraryModal({ open, onClose, onSelect }: Props) {
+export default function LogoLibraryModal({ open, onClose, onSelect, zIndex }: Props) {
   const { message } = App.useApp();
   const [logos, setLogos] = useState<LogoLibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +45,7 @@ export default function LogoLibraryModal({ open, onClose, onSelect }: Props) {
   };
 
   return (
-    <Modal title="Mevcut Logolardan Seç" open={open} onCancel={onClose} footer={null}>
+    <Modal title="Mevcut Logolardan Seç" open={open} onCancel={onClose} footer={null} zIndex={zIndex}>
       {loading ? (
         <Text type="secondary">Yükleniyor...</Text>
       ) : logos.length === 0 ? (

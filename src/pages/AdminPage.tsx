@@ -412,6 +412,7 @@ export default function AdminPage() {
         open={cardLogoLibraryOpen}
         onClose={() => setCardLogoLibraryOpen(false)}
         onSelect={handleChangeCardLogo}
+        zIndex={1100}
       />
     </Layout>
   );
