@@ -16,7 +16,8 @@ const QR_SIZE = 460;
 const QR_BOX_PADDING = 40;
 const QR_BOX_SIZE = QR_SIZE + QR_BOX_PADDING * 2;
 
-const WEBSITE_BOTTOM_MARGIN = 90;
+const GAP_TEXT_TO_QR = 130;
+const GAP_QR_TO_WEBSITE = 70;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -229,10 +230,11 @@ export async function buildProfileCardDataUrl(employee: Employee, options: Profi
   const nameY = AVATAR_TOP + AVATAR_SIZE + 90;
   ctx.fillText(fullName || 'İsimsiz Çalışan', centerX, nameY);
 
+  const positionY = nameY + 56;
   if (employee.position) {
     ctx.font = '400 38px -apple-system, "Segoe UI", sans-serif';
     ctx.globalAlpha = 0.8;
-    ctx.fillText(employee.position, centerX, nameY + 56);
+    ctx.fillText(employee.position, centerX, positionY);
     ctx.globalAlpha = 1;
   }
 
@@ -248,9 +250,9 @@ export async function buildProfileCardDataUrl(employee: Employee, options: Profi
   }
   const scaledLogoSize = logoImage ? qr.logoSize * (QR_SIZE / 176) : qr.logoSize;
 
-  const websiteY = CARD_HEIGHT - WEBSITE_BOTTOM_MARGIN;
-  const boxY = websiteY - 70 - QR_BOX_SIZE;
+  const boxY = positionY + GAP_TEXT_TO_QR;
   const boxX = centerX - QR_BOX_SIZE / 2;
+  const websiteY = boxY + QR_BOX_SIZE + GAP_QR_TO_WEBSITE;
   ctx.fillStyle = '#ffffff';
   roundedRectPath(ctx, boxX, boxY, QR_BOX_SIZE, QR_BOX_SIZE, 36);
   ctx.fill();
