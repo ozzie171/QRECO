@@ -81,13 +81,16 @@ export function buildEmailSignatureHtml(
     <td style="padding:24px; vertical-align:middle;" width="188">
       <img src="${imageUrl}" width="140" height="140" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? '70px' : '16px'}; object-fit:cover; width:140px; height:140px;" />
     </td>
-    <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">
-      <!-- A bare "&nbsp;" with font-size:0 has zero intrinsic width, so
-           table-layout:auto collapses this column to 0 regardless of the
-           width above — every other column's real content "wins" the
-           space. Nesting a div with its own explicit width gives the
-           column something concrete to measure, so it actually holds. -->
-      <div style="width:2px; height:1px; line-height:1px; font-size:1px;"></div>
+    <td style="width:2px; vertical-align:middle; font-size:0; line-height:0;">
+      <!-- The colored bar lives on this inner div (sized and centered to
+           match the QR/photo image's own 140px height) rather than on the
+           td's own background, which would otherwise stretch to the full
+           row height — taller than the image whenever the address column
+           ends up tallest. A bare "&nbsp;" td also has zero intrinsic
+           width under table-layout:auto, collapsing the column to 0
+           regardless of the width above; this div's own explicit width
+           is what actually holds the column open. -->
+      <div style="width:2px; height:140px; background-color:#eb0045;"></div>
     </td>
     <td style="padding:24px; vertical-align:middle; white-space:nowrap;" width="300">
       <div style="font-size:21px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
