@@ -72,15 +72,11 @@ export function buildEmailSignatureHtml(
   const addressColumnPadding = 24;
   const ecoLogoWidth = addressColumnWidth - addressColumnPadding * 2;
 
-  const extraLogoColumn = extraLogoUrl
-    ? `
-    <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
-    <td style="padding:24px; vertical-align:middle;" width="156">
-      <img src="${escapeHtml(extraLogoUrl)}" width="132" alt="" style="display:block; border:0; max-width:132px; height:auto;" />
-    </td>`
-    : '';
-
-  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:#f5f6f6; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:36px;">
+  // The card itself (gradient background, border, rounded corners) only
+  // wraps the brand content. The extra logo is a separate cell placed
+  // outside that bordered shape — so it reads as sitting beside the card
+  // rather than being clipped against its rounded edge.
+  const card = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:#f5f6f6; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:36px;">
   <tr>
     <td style="padding:24px; vertical-align:middle;" width="160">
       <img src="${imageUrl}" width="140" height="140" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? '70px' : '16px'}; object-fit:cover; width:140px; height:140px;" />
@@ -103,7 +99,18 @@ export function buildEmailSignatureHtml(
       <img src="${origin}/eco-logo-kirmizi.svg" width="${ecoLogoWidth}" alt="eco" style="display:block; border:0; margin-bottom:12px;" />
       ${employee.address ? `<div style="font-size:13px; color:#444444; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
       ${employee.website ? `<div style="margin-top:10px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:14px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
-    </td>${extraLogoColumn}
+    </td>
+  </tr>
+</table>`;
+
+  if (!extraLogoUrl) return card;
+
+  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate;">
+  <tr>
+    <td style="vertical-align:middle;">${card}</td>
+    <td style="vertical-align:middle; padding-left:20px;">
+      <img src="${escapeHtml(extraLogoUrl)}" width="132" alt="" style="display:block; border:0; max-width:132px; height:auto;" />
+    </td>
   </tr>
 </table>`;
 }
