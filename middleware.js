@@ -1,6 +1,12 @@
 const ADMIN_USERNAME = 'admin';
 
-const PUBLIC_PREFIXES = ['/profile/', '/assets/', '/eco-logo-beyaz.svg'];
+const PUBLIC_PREFIXES = [
+  '/profile/',
+  '/assets/',
+  '/eco-logo-beyaz.svg',
+  '/eco-logo-kirmizi.svg',
+  '/signature-icons/',
+];
 
 function isPublicPath(pathname, method) {
   if (PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix))) {
@@ -10,6 +16,9 @@ function isPublicPath(pathname, method) {
     return true;
   }
   if (method === 'GET' && /^\/api\/users\/[^/]+\/vcard$/.test(pathname)) {
+    return true;
+  }
+  if (method === 'GET' && /^\/api\/users\/[^/]+\/qr-png$/.test(pathname)) {
     return true;
   }
   return false;

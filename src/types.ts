@@ -12,6 +12,7 @@ export interface SocialLinks {
   instagram: string;
   twitter: string;
   facebook: string;
+  youtube: string;
 }
 
 export interface Employee {

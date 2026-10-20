@@ -30,6 +30,7 @@ const defaultSocial = {
   instagram: '',
   twitter: '',
   facebook: '',
+  youtube: '',
 };
 
 export function rowToEmployee(row) {

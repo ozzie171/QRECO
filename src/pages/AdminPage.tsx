@@ -11,6 +11,8 @@ import {
   Modal,
   Tooltip,
   Spin,
+  Segmented,
+  Input,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -25,6 +27,7 @@ import {
   DownloadOutlined,
   IdcardOutlined,
   EyeOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
@@ -32,6 +35,7 @@ import LogoLibraryModal from '../components/LogoLibraryModal';
 import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
 import { downloadEmployeeQrSvg } from '../lib/qrSvg';
 import { buildProfileCardDataUrl, downloadProfileCardImage } from '../lib/profileCardImage';
+import { buildEmailSignatureHtml, type SignatureImageMode } from '../lib/emailSignature';
 import { withHttpProtocol } from '../lib/url';
 import type { Employee, EmployeeInput } from '../types';
 
@@ -52,6 +56,8 @@ export default function AdminPage() {
   const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [cardPreviewLoading, setCardPreviewLoading] = useState(false);
   const [cardLogoLibraryOpen, setCardLogoLibraryOpen] = useState(false);
+  const [signatureEmployee, setSignatureEmployee] = useState<Employee | null>(null);
+  const [signatureMode, setSignatureMode] = useState<SignatureImageMode>('qr');
 
   const load = async () => {
     setLoading(true);
@@ -153,6 +159,29 @@ export default function AdminPage() {
     link.download = `${name}-profil-karti.png`;
     link.href = cardPreviewUrl;
     link.click();
+  };
+
+  const handleOpenSignature = (employee: Employee) => {
+    setSignatureEmployee(employee);
+    setSignatureMode('qr');
+  };
+
+  const handleCopySignature = async (html: string) => {
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new window.ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([html], { type: 'text/plain' }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(html);
+      }
+      message.success('İmza panoya kopyalandı. Mail imza kutunuza yapıştırabilirsiniz.');
+    } catch {
+      message.error('Panoya kopyalanırken bir hata oluştu.');
+    }
   };
 
   const handleDuplicate = async (employee: Employee) => {
@@ -307,6 +336,9 @@ export default function AdminPage() {
               onClick={() => handleDownloadProfileCard(employee)}
             />
           </Tooltip>
+          <Tooltip title="Mail İmzası">
+            <Button icon={<MailOutlined />} onClick={() => handleOpenSignature(employee)} />
+          </Tooltip>
           <Tooltip title="Düzenle">
             <Button icon={<EditOutlined />} onClick={() => openEdit(employee)} />
           </Tooltip>
@@ -327,6 +359,8 @@ export default function AdminPage() {
       ),
     },
   ];
+
+  const signatureHtml = signatureEmployee ? buildEmailSignatureHtml(signatureEmployee, signatureMode) : '';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -414,6 +448,52 @@ export default function AdminPage() {
         onSelect={handleChangeCardLogo}
         zIndex={1100}
       />
+
+      <Modal
+        title={signatureEmployee ? `${signatureEmployee.firstName} ${signatureEmployee.lastName} · Mail İmzası` : ''}
+        open={!!signatureEmployee}
+        onCancel={() => setSignatureEmployee(null)}
+        width={760}
+        footer={[
+          <Button key="close" onClick={() => setSignatureEmployee(null)}>
+            Kapat
+          </Button>,
+          <Button
+            key="copy"
+            type="primary"
+            icon={<CopyOutlined />}
+            onClick={() => handleCopySignature(signatureHtml)}
+          >
+            Panoya Kopyala
+          </Button>,
+        ]}
+      >
+        {signatureEmployee && (
+          <>
+            <Segmented
+              value={signatureMode}
+              onChange={(value) => setSignatureMode(value as SignatureImageMode)}
+              options={[
+                { label: 'QR Kodu', value: 'qr' },
+                { label: 'Fotoğraf', value: 'photo', disabled: !signatureEmployee.photoUrl },
+              ]}
+              style={{ marginBottom: 16 }}
+            />
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 8, marginBottom: 16 }}>
+              <iframe
+                title="Mail İmzası Önizleme"
+                srcDoc={`<html><body style="margin:0;">${signatureHtml}</body></html>`}
+                style={{ width: '100%', height: 220, border: 'none' }}
+              />
+            </div>
+            <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+              "Panoya Kopyala" butonuna bastıktan sonra mail imza düzenleme kutunuza (Gmail, Outlook vb.)
+              doğrudan yapıştırabilirsiniz. Aşağıda ham HTML kodu da yer alıyor.
+            </Typography.Text>
+            <Input.TextArea value={signatureHtml} readOnly autoSize={{ minRows: 4, maxRows: 8 }} />
+          </>
+        )}
+      </Modal>
     </Layout>
   );
 }

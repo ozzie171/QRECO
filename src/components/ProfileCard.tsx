@@ -12,6 +12,7 @@ import {
   InstagramOutlined,
   TwitterOutlined,
   FacebookOutlined,
+  YoutubeOutlined,
 } from '@ant-design/icons';
 import { withHttpProtocol } from '../lib/url';
 
@@ -22,6 +23,7 @@ export interface ProfileSocialLinks {
   instagram: string;
   twitter: string;
   facebook: string;
+  youtube: string;
 }
 
 export interface ProfileCardData {
@@ -61,6 +63,7 @@ const SOCIAL_ICONS: { key: keyof ProfileSocialLinks; icon: ReactNode; label: str
   { key: 'instagram', icon: <InstagramOutlined />, label: 'Instagram' },
   { key: 'twitter', icon: <TwitterOutlined />, label: 'Twitter / X' },
   { key: 'facebook', icon: <FacebookOutlined />, label: 'Facebook' },
+  { key: 'youtube', icon: <YoutubeOutlined />, label: 'YouTube' },
 ];
 
 export default function ProfileCard({ data, compact = false }: Props) {
@@ -72,7 +75,7 @@ export default function ProfileCard({ data, compact = false }: Props) {
   const position = lang === 'en' && data.enPosition ? data.enPosition : data.position;
   const address = lang === 'en' && data.enAddress ? data.enAddress : data.address;
   const mapsUrl = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : '';
-  const social = data.social || { linkedin: '', instagram: '', twitter: '', facebook: '' };
+  const social = data.social || { linkedin: '', instagram: '', twitter: '', facebook: '', youtube: '' };
   const activeSocial = SOCIAL_ICONS.filter((item) => social[item.key]);
   const vcardHref = `/api/users/${data.id}/vcard?lang=${lang}`;
 

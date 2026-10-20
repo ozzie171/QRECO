@@ -22,6 +22,7 @@ import {
   InstagramOutlined,
   TwitterOutlined,
   FacebookOutlined,
+  YoutubeOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import { uploadPhoto, uploadLogo } from "../api";
@@ -53,6 +54,7 @@ const defaultSocial: SocialLinks = {
   instagram: "",
   twitter: "",
   facebook: "",
+  youtube: "",
 };
 
 const emptyValues: EmployeeInput = {
@@ -358,6 +360,17 @@ export default function EmployeeFormDrawer({
                           <Input
                             prefix={<FacebookOutlined />}
                             placeholder="Facebook bağlantısı"
+                          />
+                        </Form.Item>
+                      </Space.Compact>
+                      <Space.Compact block style={{ marginBottom: 24 }}>
+                        <Form.Item
+                          name={["social", "youtube"]}
+                          style={{ width: "50%" }}
+                        >
+                          <Input
+                            prefix={<YoutubeOutlined />}
+                            placeholder="YouTube bağlantısı"
                           />
                         </Form.Item>
                       </Space.Compact>
