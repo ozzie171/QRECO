@@ -23,6 +23,14 @@ const SOCIAL_LABELS: Record<'linkedin' | 'instagram' | 'youtube', string> = {
 
 export type SignatureImageMode = 'qr' | 'photo';
 
+// Myriad Pro and Quicksand are the brand's actual typefaces (per MAIL IMZA.svg),
+// but neither can be embedded in an email the way a webpage embeds a font —
+// email clients strip <style>/@font-face/external stylesheets. They're listed
+// first in each stack so a recipient who happens to have them installed sees
+// the real brand type; everyone else falls back to the nearest safe font.
+const NAME_FONT = "'Myriad Pro', Myriad, Arial, Helvetica, sans-serif";
+const BODY_FONT = "'Quicksand', 'Century Gothic', Arial, Helvetica, sans-serif";
+
 /** Builds a self-contained, inline-styled HTML table signature matching the
  * brand's email-signature design (MAIL IMZA.svg), populated with one
  * employee's own data. Every image is referenced by its real hosted URL
@@ -53,29 +61,29 @@ export function buildEmailSignatureHtml(employee: Employee, imageMode: Signature
 
   const addressLines = escapeHtml(employee.address || '').replace(/\n/g, '<br />');
 
-  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff;">
+  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:#f5f6f6; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:36px;">
   <tr>
     <td style="padding:24px; vertical-align:middle;" width="160">
       <img src="${imageUrl}" width="140" height="140" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? '70px' : '16px'}; object-fit:cover; width:140px; height:140px;" />
     </td>
     <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
     <td style="padding:24px; vertical-align:middle; white-space:nowrap;" width="300">
-      <div style="font-size:21px; font-weight:bold; color:#ea0b42; font-family:Arial, Helvetica, sans-serif; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
-      ${title ? `<div style="font-size:14px; color:#444444; margin-top:2px; font-family:Arial, Helvetica, sans-serif; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
+      <div style="font-size:21px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
+      ${title ? `<div style="font-size:14px; color:#444444; margin-top:2px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
       ${
         socialRow
           ? `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse; margin-top:12px;"><tr>${socialRow}</tr></table>`
           : ''
       }
-      <div style="margin-top:14px; font-size:14px; font-family:Arial, Helvetica, sans-serif; line-height:1.6; white-space:nowrap;">
+      <div style="margin-top:14px; font-size:14px; font-family:${BODY_FONT}; line-height:1.6; white-space:nowrap;">
         ${employee.phone ? `<div><span style="color:#ea0b42; font-weight:bold;">Tel:</span> <span style="color:#333333;">${escapeHtml(employee.phone)}</span></div>` : ''}
         ${employee.email ? `<div><span style="color:#ea0b42; font-weight:bold;">Email:</span> <a href="mailto:${escapeHtml(employee.email)}" style="color:#333333; text-decoration:none;">${escapeHtml(employee.email)}</a></div>` : ''}
       </div>
     </td>
     <td style="padding:24px; vertical-align:middle;" width="260">
       <img src="${origin}/eco-logo-kirmizi.svg" width="110" alt="eco" style="display:block; border:0; margin-bottom:12px;" />
-      ${employee.address ? `<div style="font-size:13px; color:#444444; font-family:Arial, Helvetica, sans-serif; line-height:1.5;">${addressLines}</div>` : ''}
-      ${employee.website ? `<div style="margin-top:10px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:14px; text-decoration:none; font-family:Arial, Helvetica, sans-serif;">${escapeHtml(employee.website)}</a></div>` : ''}
+      ${employee.address ? `<div style="font-size:13px; color:#444444; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
+      ${employee.website ? `<div style="margin-top:10px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:14px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
     </td>
   </tr>
 </table>`;
