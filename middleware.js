@@ -6,6 +6,13 @@ const PUBLIC_PREFIXES = [
   '/eco-logo-beyaz.svg',
   '/eco-logo-kirmizi.svg',
   '/signature-icons/',
+  // Vite's own dev-mode plumbing — only ever requested by `vercel dev`
+  // locally; the production build serves everything from /assets/ instead,
+  // so these paths don't exist as real routes once deployed.
+  '/@vite/',
+  '/@react-refresh',
+  '/src/',
+  '/node_modules/',
 ];
 
 function isPublicPath(pathname, method) {
