@@ -105,11 +105,19 @@ export function buildEmailSignatureHtml(
 
   if (!extraLogoUrl) return card;
 
+  // Sized to the card's own typical rendered height (measured, not
+  // calculated — the card's height already flexes with address line count)
+  // so the two sit flush top-to-bottom instead of the logo overshooting
+  // above/below it when its own aspect ratio isn't square. Only height is
+  // fixed; width is left to scale naturally so the logo's own proportions
+  // never get distorted.
+  const extraLogoHeight = 204;
+
   return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate;">
   <tr>
     <td style="vertical-align:middle;">${card}</td>
     <td style="vertical-align:middle; padding-left:20px;">
-      <img src="${escapeHtml(extraLogoUrl)}" width="132" alt="" style="display:block; border:0; max-width:132px; height:auto;" />
+      <img src="${escapeHtml(extraLogoUrl)}" height="${extraLogoHeight}" alt="" style="display:block; border:0; height:${extraLogoHeight}px; width:auto; max-width:200px;" />
     </td>
   </tr>
 </table>`;
