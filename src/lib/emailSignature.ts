@@ -38,7 +38,11 @@ const BODY_FONT = "'Quicksand', 'Century Gothic', Arial, Helvetica, sans-serif";
  * fetch signature images over the network, not through JS — this is also
  * why the QR goes through the dedicated /qr-png server endpoint instead of
  * the app's own canvas/SVG QR renderer. */
-export function buildEmailSignatureHtml(employee: Employee, imageMode: SignatureImageMode): string {
+export function buildEmailSignatureHtml(
+  employee: Employee,
+  imageMode: SignatureImageMode,
+  extraLogoUrl?: string | null,
+): string {
   const origin = window.location.origin;
   const fullName = [employee.firstName, employee.lastName].filter(Boolean).join(' ');
   const title = [employee.position, employee.enPosition].filter(Boolean).join(' & ');
@@ -61,6 +65,21 @@ export function buildEmailSignatureHtml(employee: Employee, imageMode: Signature
 
   const addressLines = escapeHtml(employee.address || '').replace(/\n/g, '<br />');
 
+  // The eco wordmark is sized to the address column's own content width
+  // (column width minus its left/right padding), so it reads as wide as the
+  // address text block beneath it rather than looking small and lost.
+  const addressColumnWidth = 260;
+  const addressColumnPadding = 24;
+  const ecoLogoWidth = addressColumnWidth - addressColumnPadding * 2;
+
+  const extraLogoColumn = extraLogoUrl
+    ? `
+    <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
+    <td style="padding:24px; vertical-align:middle;" width="140">
+      <img src="${escapeHtml(extraLogoUrl)}" width="120" alt="" style="display:block; border:0; max-width:120px; height:auto;" />
+    </td>`
+    : '';
+
   return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:#f5f6f6; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:36px;">
   <tr>
     <td style="padding:24px; vertical-align:middle;" width="160">
@@ -80,11 +99,11 @@ export function buildEmailSignatureHtml(employee: Employee, imageMode: Signature
         ${employee.email ? `<div><span style="color:#ea0b42; font-weight:bold;">Email:</span> <a href="mailto:${escapeHtml(employee.email)}" style="color:#333333; text-decoration:none;">${escapeHtml(employee.email)}</a></div>` : ''}
       </div>
     </td>
-    <td style="padding:24px; vertical-align:middle;" width="260">
-      <img src="${origin}/eco-logo-kirmizi.svg" width="110" alt="eco" style="display:block; border:0; margin-bottom:12px;" />
+    <td style="padding:24px; vertical-align:middle;" width="${addressColumnWidth}">
+      <img src="${origin}/eco-logo-kirmizi.svg" width="${ecoLogoWidth}" alt="eco" style="display:block; border:0; margin-bottom:12px;" />
       ${employee.address ? `<div style="font-size:13px; color:#444444; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
       ${employee.website ? `<div style="margin-top:10px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:14px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
-    </td>
+    </td>${extraLogoColumn}
   </tr>
 </table>`;
 }

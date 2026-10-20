@@ -13,8 +13,10 @@ import {
   Spin,
   Segmented,
   Input,
+  Upload,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { UploadProps } from 'antd';
 import {
   PlusOutlined,
   UserOutlined,
@@ -28,12 +30,23 @@ import {
   IdcardOutlined,
   EyeOutlined,
   MailOutlined,
+  LoadingOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
 import LogoLibraryModal from '../components/LogoLibraryModal';
-import { createEmployee, deleteEmployee, fetchEmployees, updateEmployee } from '../api';
-import { downloadEmployeeQrSvg } from '../lib/qrSvg';
+import RoundedQrCanvas from '../components/RoundedQrCanvas';
+import {
+  createEmployee,
+  deleteEmployee,
+  deleteSignatureExtraLogo,
+  fetchEmployees,
+  fetchSignatureExtraLogo,
+  updateEmployee,
+  uploadSignatureExtraLogo,
+} from '../api';
+import { downloadEmployeeQrSvg, buildQrSvgMarkup } from '../lib/qrSvg';
 import { buildProfileCardDataUrl, downloadProfileCardImage } from '../lib/profileCardImage';
 import { buildEmailSignatureHtml, type SignatureImageMode } from '../lib/emailSignature';
 import { withHttpProtocol } from '../lib/url';
@@ -58,6 +71,22 @@ export default function AdminPage() {
   const [cardLogoLibraryOpen, setCardLogoLibraryOpen] = useState(false);
   const [signatureEmployee, setSignatureEmployee] = useState<Employee | null>(null);
   const [signatureMode, setSignatureMode] = useState<SignatureImageMode>('qr');
+  const [extraLogoUrl, setExtraLogoUrl] = useState<string | null>(null);
+  const [extraLogoUploading, setExtraLogoUploading] = useState(false);
+  const [generalQrOpen, setGeneralQrOpen] = useState(false);
+  const [generalQrUrl, setGeneralQrUrl] = useState('');
+  const [generalQrLogoUrl, setGeneralQrLogoUrl] = useState('');
+  const [generalQrLogoLibraryOpen, setGeneralQrLogoLibraryOpen] = useState(false);
+  const [generalQrDownloading, setGeneralQrDownloading] = useState(false);
+
+  const loadExtraLogo = async () => {
+    try {
+      const url = await fetchSignatureExtraLogo();
+      setExtraLogoUrl(url);
+    } catch {
+      // Non-critical — the signature just renders without the extra logo.
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -73,6 +102,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     load();
+    loadExtraLogo();
   }, []);
 
   const openCreate = () => {
@@ -181,6 +211,65 @@ export default function AdminPage() {
       message.success('İmza panoya kopyalandı. Mail imza kutunuza yapıştırabilirsiniz.');
     } catch {
       message.error('Panoya kopyalanırken bir hata oluştu.');
+    }
+  };
+
+  const handleUploadExtraLogo: UploadProps['beforeUpload'] = async (file) => {
+    setExtraLogoUploading(true);
+    try {
+      const url = await uploadSignatureExtraLogo(file);
+      setExtraLogoUrl(url);
+      message.success('Logo yüklendi.');
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : 'Logo yüklenemedi.');
+    } finally {
+      setExtraLogoUploading(false);
+    }
+    return false;
+  };
+
+  const handleRemoveExtraLogo = async () => {
+    try {
+      await deleteSignatureExtraLogo();
+      setExtraLogoUrl(null);
+      message.success('Logo kaldırıldı.');
+    } catch {
+      message.error('Logo kaldırılırken bir hata oluştu.');
+    }
+  };
+
+  const handleDownloadGeneralQr = async () => {
+    if (!generalQrUrl.trim()) {
+      message.error('Önce bir bağlantı girin.');
+      return;
+    }
+    setGeneralQrDownloading(true);
+    try {
+      // Matches QrCodeCard's own logoSize/size reference ratio so a logo
+      // picked here looks proportioned the same way as everywhere else.
+      const size = 480;
+      const referenceSize = 176;
+      const rawLogoSize = 46;
+      const svgMarkup = await buildQrSvgMarkup({
+        value: generalQrUrl.trim(),
+        size,
+        fgColor: '#000000',
+        bgColor: 'transparent',
+        errorLevel: generalQrLogoUrl ? 'H' : 'L',
+        logoUrl: generalQrLogoUrl || undefined,
+        logoSize: generalQrLogoUrl ? rawLogoSize * (size / referenceSize) : rawLogoSize,
+      });
+      const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = 'qr-kodu.svg';
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      message.error('QR kodu oluşturulurken bir hata oluştu.');
+    } finally {
+      setGeneralQrDownloading(false);
     }
   };
 
@@ -360,7 +449,9 @@ export default function AdminPage() {
     },
   ];
 
-  const signatureHtml = signatureEmployee ? buildEmailSignatureHtml(signatureEmployee, signatureMode) : '';
+  const signatureHtml = signatureEmployee
+    ? buildEmailSignatureHtml(signatureEmployee, signatureMode, extraLogoUrl)
+    : '';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -371,6 +462,9 @@ export default function AdminPage() {
         <Space>
           <Button icon={<QrcodeOutlined />} onClick={() => setQrVisible((v) => !v)}>
             {qrVisible ? "QR'ları Gizle" : "QR'ları Göster"}
+          </Button>
+          <Button icon={<LinkOutlined />} onClick={() => setGeneralQrOpen(true)}>
+            Genel QR Oluştur
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Yeni Çalışan Ekle
@@ -479,6 +573,42 @@ export default function AdminPage() {
               ]}
               style={{ marginBottom: 16 }}
             />
+            <div style={{ marginBottom: 16 }}>
+              <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+                Sağdaki Ekstra Logo
+              </Typography.Text>
+              <Space align="center">
+                {extraLogoUrl && (
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 6,
+                    }}
+                  >
+                    <img src={extraLogoUrl} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                  </div>
+                )}
+                <Upload accept=".svg,image/svg+xml" maxCount={1} showUploadList={false} beforeUpload={handleUploadExtraLogo}>
+                  <Button icon={extraLogoUploading ? <LoadingOutlined /> : <PlusOutlined />} loading={extraLogoUploading}>
+                    {extraLogoUrl ? 'Logoyu Değiştir' : 'Logo Yükle (SVG)'}
+                  </Button>
+                </Upload>
+                {extraLogoUrl && (
+                  <Button danger type="text" icon={<CloseOutlined />} onClick={handleRemoveExtraLogo}>
+                    Kaldır
+                  </Button>
+                )}
+              </Space>
+              <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+                Bu logo tüm çalışanların mail imzasında ortak olarak görünür.
+              </Typography.Text>
+            </div>
             <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 8, marginBottom: 16 }}>
               <iframe
                 title="Mail İmzası Önizleme"
@@ -494,6 +624,83 @@ export default function AdminPage() {
           </>
         )}
       </Modal>
+
+      <Modal
+        title="Genel QR Oluştur"
+        open={generalQrOpen}
+        onCancel={() => setGeneralQrOpen(false)}
+        footer={[
+          <Button key="close" onClick={() => setGeneralQrOpen(false)}>
+            Kapat
+          </Button>,
+          <Button
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
+            loading={generalQrDownloading}
+            onClick={handleDownloadGeneralQr}
+          >
+            QR Kodu İndir (SVG)
+          </Button>,
+        ]}
+      >
+        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          Çalışan profillerinden bağımsız, herhangi bir bağlantıya giden bir QR kod oluşturun.
+        </Typography.Text>
+        <Input
+          placeholder="https://..."
+          value={generalQrUrl}
+          onChange={(e) => setGeneralQrUrl(e.target.value)}
+          style={{ marginBottom: 16 }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'inline-block',
+              padding: 20,
+              background: '#bfbfbf',
+              borderRadius: 16,
+              lineHeight: 0,
+            }}
+          >
+            {generalQrUrl.trim() ? (
+              <RoundedQrCanvas
+                value={generalQrUrl.trim()}
+                size={200}
+                fgColor="#000000"
+                bgColor="transparent"
+                errorLevel={generalQrLogoUrl ? 'H' : 'L'}
+                logoUrl={generalQrLogoUrl || undefined}
+                logoSize={generalQrLogoUrl ? 46 * (200 / 176) : 46}
+              />
+            ) : (
+              <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography.Text type="secondary">Önizleme için bağlantı girin</Typography.Text>
+              </div>
+            )}
+          </div>
+        </div>
+        <Space>
+          <Button onClick={() => setGeneralQrLogoLibraryOpen(true)}>
+            {generalQrLogoUrl ? 'Logoyu Değiştir' : 'Logo Ekle'}
+          </Button>
+          {generalQrLogoUrl && (
+            <Button danger type="text" icon={<CloseOutlined />} onClick={() => setGeneralQrLogoUrl('')}>
+              Logoyu Kaldır
+            </Button>
+          )}
+        </Space>
+      </Modal>
+
+      <LogoLibraryModal
+        open={generalQrLogoLibraryOpen}
+        onClose={() => setGeneralQrLogoLibraryOpen(false)}
+        onSelect={(url) => {
+          setGeneralQrLogoUrl(url);
+          setGeneralQrLogoLibraryOpen(false);
+        }}
+        zIndex={1100}
+      />
     </Layout>
   );
 }

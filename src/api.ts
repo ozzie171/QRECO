@@ -58,3 +58,22 @@ export async function fetchLogos(): Promise<LogoLibraryItem[]> {
 export async function deleteLogo(name: string): Promise<void> {
   await client.delete('/logos', { params: { name } });
 }
+
+/** The single, site-wide extra logo shown in every email signature. */
+export async function fetchSignatureExtraLogo(): Promise<string | null> {
+  const { data } = await client.get<{ url: string | null }>('/upload/signature-logo');
+  return data.url;
+}
+
+export async function uploadSignatureExtraLogo(file: File): Promise<string> {
+  const form = new FormData();
+  form.append('logo', file);
+  const { data } = await client.post<{ url: string }>('/upload/signature-logo', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
+}
+
+export async function deleteSignatureExtraLogo(): Promise<void> {
+  await client.delete('/upload/signature-logo');
+}
