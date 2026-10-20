@@ -81,7 +81,7 @@ export function buildEmailSignatureHtml(
     <td style="padding:24px; vertical-align:middle;" width="160">
       <img src="${imageUrl}" width="140" height="140" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? '70px' : '16px'}; object-fit:cover; width:140px; height:140px;" />
     </td>
-    <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
+    <td height="100%" style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
     <td style="padding:24px; vertical-align:middle; white-space:nowrap;" width="300">
       <div style="font-size:21px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
       ${title ? `<div style="font-size:14px; color:#444444; margin-top:2px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}

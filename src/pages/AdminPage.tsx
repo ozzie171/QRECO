@@ -159,7 +159,7 @@ export default function AdminPage() {
     setCardPreviewUrl(null);
     setCardPreviewLoading(true);
     try {
-      const dataUrl = await buildProfileCardDataUrl(employee, { qrLogoUrl: employee.qr.logoUrl });
+      const dataUrl = await buildProfileCardDataUrl(employee);
       setCardPreviewUrl(dataUrl);
     } catch {
       message.error('Kart önizlemesi oluşturulurken bir hata oluştu.');
@@ -173,10 +173,20 @@ export default function AdminPage() {
     if (!cardEmployee) return;
     setCardPreviewLoading(true);
     try {
-      const dataUrl = await buildProfileCardDataUrl(cardEmployee, { qrLogoUrl: url });
+      // Persisted, not just a one-off render tweak: this is the same
+      // qr.logoUrl used everywhere else (QR Tasarımı tab, the employee's
+      // own QR code, and the email signature's /qr-png), so changing it
+      // here keeps all of those in sync instead of only affecting this card.
+      const updated = await updateEmployee(cardEmployee.id, {
+        qr: { ...cardEmployee.qr, logoUrl: url },
+      });
+      setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+      setCardEmployee(updated);
+      const dataUrl = await buildProfileCardDataUrl(updated);
       setCardPreviewUrl(dataUrl);
+      message.success('Logo güncellendi.');
     } catch {
-      message.error('Kart önizlemesi oluşturulurken bir hata oluştu.');
+      message.error('Logo güncellenirken bir hata oluştu.');
     } finally {
       setCardPreviewLoading(false);
     }
@@ -613,7 +623,7 @@ export default function AdminPage() {
               <iframe
                 title="Mail İmzası Önizleme"
                 srcDoc={`<html><body style="margin:0;">${signatureHtml}</body></html>`}
-                style={{ width: '100%', height: 220, border: 'none' }}
+                style={{ width: '100%', height: 280, border: 'none' }}
               />
             </div>
             <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
