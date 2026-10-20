@@ -16,18 +16,29 @@ const upload = multer({
 // A single, site-wide "extra logo" shown on the right side of every
 // employee's email signature (not per-employee) — always stored at this
 // same path so there's exactly one current file, no extra DB state needed.
-const SIGNATURE_LOGO_PATH = 'signature/extra-logo.svg';
+const SIGNATURE_LOGO_DIR = 'signature';
+const SIGNATURE_LOGO_NAME = 'extra-logo.svg';
+const SIGNATURE_LOGO_PATH = `${SIGNATURE_LOGO_DIR}/${SIGNATURE_LOGO_NAME}`;
+
+// Because the path never changes (upsert overwrites the same object),
+// browsers and Supabase's own CDN cache would otherwise keep serving the
+// previous file after a re-upload. Supabase hands back a fresh `version`
+// UUID on every write, so appending it as a cache-busting query string
+// makes each new upload's URL genuinely different from the last one's.
+function buildVersionedUrl(supabase, file) {
+  const { data } = supabase.storage.from(UPLOAD_BUCKET).getPublicUrl(SIGNATURE_LOGO_PATH);
+  return `${data.publicUrl}?v=${file.version}`;
+}
 
 export default async function handler(req, res) {
   const supabase = getSupabase();
 
   if (req.method === 'GET') {
-    const { data: files, error } = await supabase.storage.from(UPLOAD_BUCKET).list('signature');
+    const { data: files, error } = await supabase.storage.from(UPLOAD_BUCKET).list(SIGNATURE_LOGO_DIR);
     if (error) return res.status(500).json({ error: error.message });
-    const exists = (files || []).some((file) => file.name === 'extra-logo.svg');
-    if (!exists) return res.status(200).json({ url: null });
-    const { data } = supabase.storage.from(UPLOAD_BUCKET).getPublicUrl(SIGNATURE_LOGO_PATH);
-    return res.status(200).json({ url: data.publicUrl });
+    const file = (files || []).find((f) => f.name === SIGNATURE_LOGO_NAME);
+    if (!file) return res.status(200).json({ url: null });
+    return res.status(200).json({ url: buildVersionedUrl(supabase, file) });
   }
 
   if (req.method === 'DELETE') {
@@ -54,6 +65,10 @@ export default async function handler(req, res) {
   });
   if (error) return res.status(500).json({ error: error.message });
 
-  const { data } = supabase.storage.from(UPLOAD_BUCKET).getPublicUrl(SIGNATURE_LOGO_PATH);
-  return res.status(200).json({ url: data.publicUrl });
+  const { data: files, error: listError } = await supabase.storage.from(UPLOAD_BUCKET).list(SIGNATURE_LOGO_DIR);
+  if (listError) return res.status(500).json({ error: listError.message });
+  const file = (files || []).find((f) => f.name === SIGNATURE_LOGO_NAME);
+  if (!file) return res.status(500).json({ error: 'Yüklenen dosya bulunamadı.' });
+
+  return res.status(200).json({ url: buildVersionedUrl(supabase, file) });
 }
