@@ -75,8 +75,8 @@ export function buildEmailSignatureHtml(
   const extraLogoColumn = extraLogoUrl
     ? `
     <td style="width:2px; background-color:#eb0045; font-size:0; line-height:0;">&nbsp;</td>
-    <td style="padding:24px; vertical-align:middle;" width="140">
-      <img src="${escapeHtml(extraLogoUrl)}" width="120" alt="" style="display:block; border:0; max-width:120px; height:auto;" />
+    <td style="padding:24px; vertical-align:middle;" width="156">
+      <img src="${escapeHtml(extraLogoUrl)}" width="132" alt="" style="display:block; border:0; max-width:132px; height:auto;" />
     </td>`
     : '';
 
