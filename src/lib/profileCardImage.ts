@@ -249,7 +249,7 @@ export async function buildProfileCardDataUrl(employee: Employee): Promise<strin
   roundedRectPath(ctx, boxX, boxY, QR_BOX_SIZE, QR_BOX_SIZE, 36);
   ctx.fill();
 
-  const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const profileUrl = qr.generalQrUrl || `${window.location.origin}/profile/${employee.id}`;
   drawQrOnCanvas(
     ctx,
     boxX + QR_BOX_PADDING,

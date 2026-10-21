@@ -39,12 +39,16 @@ import LogoLibraryModal from '../components/LogoLibraryModal';
 import RoundedQrCanvas from '../components/RoundedQrCanvas';
 import {
   createEmployee,
+  createGeneralQr,
   deleteEmployee,
+  deleteGeneralQr,
   deleteSignatureExtraLogo,
   fetchEmployees,
+  fetchGeneralQrs,
   fetchSignatureExtraLogo,
   updateEmployee,
   uploadSignatureExtraLogo,
+  type GeneralQr,
 } from '../api';
 import { downloadEmployeeQrSvg, buildQrSvgMarkup } from '../lib/qrSvg';
 import { buildProfileCardDataUrl, downloadProfileCardImage } from '../lib/profileCardImage';
@@ -74,10 +78,14 @@ export default function AdminPage() {
   const [extraLogoUrl, setExtraLogoUrl] = useState<string | null>(null);
   const [extraLogoUploading, setExtraLogoUploading] = useState(false);
   const [generalQrOpen, setGeneralQrOpen] = useState(false);
-  const [generalQrUrl, setGeneralQrUrl] = useState('');
+  const [generalQrs, setGeneralQrs] = useState<GeneralQr[]>([]);
+  const [generalQrsLoading, setGeneralQrsLoading] = useState(false);
+  const [newGeneralQrName, setNewGeneralQrName] = useState('');
+  const [newGeneralQrUrl, setNewGeneralQrUrl] = useState('');
   const [generalQrLogoUrl, setGeneralQrLogoUrl] = useState('');
   const [generalQrLogoLibraryOpen, setGeneralQrLogoLibraryOpen] = useState(false);
-  const [generalQrDownloading, setGeneralQrDownloading] = useState(false);
+  const [generalQrSaving, setGeneralQrSaving] = useState(false);
+  const [generalQrDownloadingId, setGeneralQrDownloadingId] = useState<string | null>(null);
 
   const loadExtraLogo = async () => {
     try {
@@ -248,38 +256,76 @@ export default function AdminPage() {
     }
   };
 
-  const handleDownloadGeneralQr = async () => {
-    if (!generalQrUrl.trim()) {
-      message.error('Önce bir bağlantı girin.');
+  const loadGeneralQrs = async () => {
+    setGeneralQrsLoading(true);
+    try {
+      const list = await fetchGeneralQrs();
+      setGeneralQrs(list);
+    } catch {
+      message.error('Genel QR kütüphanesi yüklenirken bir hata oluştu.');
+    } finally {
+      setGeneralQrsLoading(false);
+    }
+  };
+
+  const handleOpenGeneralQrLibrary = () => {
+    setGeneralQrOpen(true);
+    setNewGeneralQrName('');
+    setNewGeneralQrUrl('');
+    setGeneralQrLogoUrl('');
+    loadGeneralQrs();
+  };
+
+  const downloadGeneralQrSvg = async (name: string, url: string, logoUrl: string) => {
+    // Matches QrCodeCard's own logoSize/size reference ratio so a logo
+    // picked here looks proportioned the same way as everywhere else.
+    const size = 480;
+    const referenceSize = 176;
+    const rawLogoSize = 46;
+    const svgMarkup = await buildQrSvgMarkup({
+      value: url,
+      size,
+      fgColor: '#000000',
+      bgColor: 'transparent',
+      errorLevel: logoUrl ? 'H' : 'L',
+      logoUrl: logoUrl || undefined,
+      logoSize: logoUrl ? rawLogoSize * (size / referenceSize) : rawLogoSize,
+    });
+    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${name || 'qr-kodu'}.svg`;
+    link.href = blobUrl;
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const handleSaveGeneralQr = async () => {
+    if (!newGeneralQrName.trim() || !newGeneralQrUrl.trim()) {
+      message.error('İsim ve bağlantı zorunludur.');
       return;
     }
-    setGeneralQrDownloading(true);
+    setGeneralQrSaving(true);
     try {
-      // Matches QrCodeCard's own logoSize/size reference ratio so a logo
-      // picked here looks proportioned the same way as everywhere else.
-      const size = 480;
-      const referenceSize = 176;
-      const rawLogoSize = 46;
-      const svgMarkup = await buildQrSvgMarkup({
-        value: generalQrUrl.trim(),
-        size,
-        fgColor: '#000000',
-        bgColor: 'transparent',
-        errorLevel: generalQrLogoUrl ? 'H' : 'L',
-        logoUrl: generalQrLogoUrl || undefined,
-        logoSize: generalQrLogoUrl ? rawLogoSize * (size / referenceSize) : rawLogoSize,
-      });
-      const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = 'qr-kodu.svg';
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
+      const created = await createGeneralQr(newGeneralQrName.trim(), newGeneralQrUrl.trim());
+      setGeneralQrs((prev) => [...prev, created]);
+      setNewGeneralQrName('');
+      setNewGeneralQrUrl('');
+      message.success('Genel QR kütüphaneye kaydedildi.');
     } catch {
-      message.error('QR kodu oluşturulurken bir hata oluştu.');
+      message.error('Kaydedilirken bir hata oluştu.');
     } finally {
-      setGeneralQrDownloading(false);
+      setGeneralQrSaving(false);
+    }
+  };
+
+  const handleDeleteGeneralQr = async (id: string) => {
+    try {
+      await deleteGeneralQr(id);
+      setGeneralQrs((prev) => prev.filter((item) => item.id !== id));
+      message.success('Genel QR silindi.');
+    } catch {
+      message.error('Silinirken bir hata oluştu.');
     }
   };
 
@@ -473,8 +519,8 @@ export default function AdminPage() {
           <Button icon={<QrcodeOutlined />} onClick={() => setQrVisible((v) => !v)}>
             {qrVisible ? "QR'ları Gizle" : "QR'ları Göster"}
           </Button>
-          <Button icon={<LinkOutlined />} onClick={() => setGeneralQrOpen(true)}>
-            Genel QR Oluştur
+          <Button icon={<LinkOutlined />} onClick={handleOpenGeneralQrLibrary}>
+            Genel QR Kütüphanesi
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Yeni Çalışan Ekle
@@ -636,70 +682,146 @@ export default function AdminPage() {
       </Modal>
 
       <Modal
-        title="Genel QR Oluştur"
+        title="Genel QR Kütüphanesi"
         open={generalQrOpen}
         onCancel={() => setGeneralQrOpen(false)}
         footer={[
           <Button key="close" onClick={() => setGeneralQrOpen(false)}>
             Kapat
           </Button>,
-          <Button
-            key="download"
-            type="primary"
-            icon={<DownloadOutlined />}
-            loading={generalQrDownloading}
-            onClick={handleDownloadGeneralQr}
-          >
-            QR Kodu İndir (SVG)
-          </Button>,
         ]}
+        width={600}
       >
         <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          Çalışan profillerinden bağımsız, herhangi bir bağlantıya giden bir QR kod oluşturun.
+          Çalışan profillerinden bağımsız, herhangi bir bağlantıya giden, tekrar seçilebilir QR kodları
+          oluşturun. Bir çalışanı düzenlerken "QR Tasarımı" sekmesinden buradaki kütüphaneyi
+          seçebilirsiniz.
         </Typography.Text>
-        <Input
-          placeholder="https://..."
-          value={generalQrUrl}
-          onChange={(e) => setGeneralQrUrl(e.target.value)}
-          style={{ marginBottom: 16 }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+          <div style={{ flex: 1 }}>
+            <Input
+              placeholder="İsim (örn. Kampanya Sayfası)"
+              value={newGeneralQrName}
+              onChange={(e) => setNewGeneralQrName(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+            <Input
+              placeholder="https://..."
+              value={newGeneralQrUrl}
+              onChange={(e) => setNewGeneralQrUrl(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+            <Space>
+              <Button size="small" onClick={() => setGeneralQrLogoLibraryOpen(true)}>
+                {generalQrLogoUrl ? 'Logoyu Değiştir' : 'Logo Ekle'}
+              </Button>
+              {generalQrLogoUrl && (
+                <Button size="small" danger type="text" icon={<CloseOutlined />} onClick={() => setGeneralQrLogoUrl('')}>
+                  Kaldır
+                </Button>
+              )}
+            </Space>
+            <Button
+              type="primary"
+              block
+              style={{ marginTop: 12 }}
+              loading={generalQrSaving}
+              onClick={handleSaveGeneralQr}
+            >
+              Kütüphaneye Kaydet
+            </Button>
+          </div>
           <div
             style={{
-              display: 'inline-block',
-              padding: 20,
+              width: 140,
+              height: 140,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               background: '#bfbfbf',
               borderRadius: 16,
-              lineHeight: 0,
             }}
           >
-            {generalQrUrl.trim() ? (
+            {newGeneralQrUrl.trim() ? (
               <RoundedQrCanvas
-                value={generalQrUrl.trim()}
-                size={200}
+                value={newGeneralQrUrl.trim()}
+                size={140}
                 fgColor="#000000"
                 bgColor="transparent"
                 errorLevel={generalQrLogoUrl ? 'H' : 'L'}
                 logoUrl={generalQrLogoUrl || undefined}
-                logoSize={generalQrLogoUrl ? 46 * (200 / 176) : 46}
+                logoSize={generalQrLogoUrl ? 46 * (140 / 176) : 46}
               />
             ) : (
-              <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography.Text type="secondary">Önizleme için bağlantı girin</Typography.Text>
-              </div>
+              <Typography.Text type="secondary" style={{ fontSize: 12, textAlign: 'center', padding: 8 }}>
+                Önizleme için bağlantı girin
+              </Typography.Text>
             )}
           </div>
         </div>
-        <Space>
-          <Button onClick={() => setGeneralQrLogoLibraryOpen(true)}>
-            {generalQrLogoUrl ? 'Logoyu Değiştir' : 'Logo Ekle'}
-          </Button>
-          {generalQrLogoUrl && (
-            <Button danger type="text" icon={<CloseOutlined />} onClick={() => setGeneralQrLogoUrl('')}>
-              Logoyu Kaldır
-            </Button>
-          )}
-        </Space>
+
+        <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+          Kayıtlı Genel QR'lar
+        </Typography.Text>
+        {generalQrsLoading ? (
+          <Spin />
+        ) : generalQrs.length === 0 ? (
+          <Typography.Text type="secondary">Henüz kaydedilmiş bir genel QR yok.</Typography.Text>
+        ) : (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            {generalQrs.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                }}
+              >
+                <div style={{ overflow: 'hidden' }}>
+                  <div>
+                    <Typography.Text strong>{item.name}</Typography.Text>
+                  </div>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }} ellipsis>
+                    {item.url}
+                  </Typography.Text>
+                </div>
+                <Space>
+                  <Tooltip title="QR Kodu İndir">
+                    <Button
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      loading={generalQrDownloadingId === item.id}
+                      onClick={async () => {
+                        setGeneralQrDownloadingId(item.id);
+                        try {
+                          await downloadGeneralQrSvg(item.name, item.url, '');
+                        } catch {
+                          message.error('QR kodu indirilirken bir hata oluştu.');
+                        } finally {
+                          setGeneralQrDownloadingId(null);
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                  <Popconfirm
+                    title="Bu genel QR'ı silmek istediğinize emin misiniz?"
+                    okText="Sil"
+                    cancelText="Vazgeç"
+                    onConfirm={() => handleDeleteGeneralQr(item.id)}
+                  >
+                    <Button size="small" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                </Space>
+              </div>
+            ))}
+          </Space>
+        )}
       </Modal>
 
       <LogoLibraryModal

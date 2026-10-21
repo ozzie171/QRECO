@@ -9,6 +9,7 @@ import {
   Upload,
   Avatar,
   ColorPicker,
+  Select,
   Slider,
   Switch,
   Tabs,
@@ -25,7 +26,8 @@ import {
   YoutubeOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { uploadPhoto, uploadLogo } from "../api";
+import { fetchGeneralQrs, uploadPhoto, uploadLogo } from "../api";
+import type { GeneralQr } from "../api";
 import QrCodeCard from "./QrCodeCard";
 import ProfileCard from "./ProfileCard";
 import LogoLibraryModal from "./LogoLibraryModal";
@@ -47,6 +49,8 @@ const defaultQr: QrDesign = {
   logoSize: 40,
   bordered: true,
   shape: "square",
+  generalQrId: "",
+  generalQrUrl: "",
 };
 
 const defaultSocial: SocialLinks = {
@@ -95,6 +99,7 @@ export default function EmployeeFormDrawer({
   const [logoLoading, setLogoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [logoLibraryOpen, setLogoLibraryOpen] = useState(false);
+  const [generalQrs, setGeneralQrs] = useState<GeneralQr[]>([]);
   const values = Form.useWatch([], form);
 
   useEffect(() => {
@@ -109,6 +114,9 @@ export default function EmployeeFormDrawer({
             }
           : emptyValues,
       );
+      fetchGeneralQrs()
+        .then(setGeneralQrs)
+        .catch(() => setGeneralQrs([]));
     }
   }, [open, employee, form]);
 
@@ -409,6 +417,37 @@ export default function EmployeeFormDrawer({
                   label: "QR Tasarımı",
                   children: (
                     <>
+                      <Form.Item label="Bu Çalışan İçin Genel QR Kullan">
+                        <Select
+                          allowClear
+                          placeholder="Kullanma (Profil Sayfasına Git)"
+                          value={values?.qr?.generalQrId || undefined}
+                          onChange={(id: string) => {
+                            const entry = generalQrs.find((g) => g.id === id);
+                            form.setFieldValue(["qr", "generalQrId"], id || "");
+                            form.setFieldValue(["qr", "generalQrUrl"], entry?.url || "");
+                          }}
+                          onClear={() => {
+                            form.setFieldValue(["qr", "generalQrId"], "");
+                            form.setFieldValue(["qr", "generalQrUrl"], "");
+                          }}
+                          options={generalQrs.map((g) => ({ label: g.name, value: g.id }))}
+                        />
+                      </Form.Item>
+                      <Form.Item name={["qr", "generalQrId"]} hidden>
+                        <Input />
+                      </Form.Item>
+                      <Form.Item name={["qr", "generalQrUrl"]} hidden>
+                        <Input />
+                      </Form.Item>
+                      {values?.qr?.generalQrId && (
+                        <Text type="secondary" style={{ display: "block", marginBottom: 16, marginTop: -8 }}>
+                          Bu çalışanın QR kodu artık profil sayfası yerine seçilen genel QR'ın
+                          bağlantısına gidecek. Kütüphaneyi "Genel QR Kütüphanesi" butonundan
+                          yönetebilirsiniz.
+                        </Text>
+                      )}
+
                       <Form.Item
                         label="Çerçeve Göster"
                         name={["qr", "bordered"]}

@@ -77,3 +77,27 @@ export async function uploadSignatureExtraLogo(file: File): Promise<string> {
 export async function deleteSignatureExtraLogo(): Promise<void> {
   await client.delete('/upload/signature-logo');
 }
+
+export interface GeneralQr {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string;
+}
+
+/** Named, reusable QR targets an employee's own QR can be pointed at
+ * instead of their profile page (e.g. a shared landing page or campaign
+ * link), managed as a small library in the admin. */
+export async function fetchGeneralQrs(): Promise<GeneralQr[]> {
+  const { data } = await client.get<GeneralQr[]>('/general-qrs');
+  return data;
+}
+
+export async function createGeneralQr(name: string, url: string): Promise<GeneralQr> {
+  const { data } = await client.post<GeneralQr>('/general-qrs', { name, url });
+  return data;
+}
+
+export async function deleteGeneralQr(id: string): Promise<void> {
+  await client.delete(`/general-qrs/${id}`);
+}

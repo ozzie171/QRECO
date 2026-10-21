@@ -159,7 +159,7 @@ const LOGO_SIZE_REFERENCE = 176;
  * table's quick-download action so the two stay in sync. */
 export async function downloadEmployeeQrSvg(employee: Employee, size = 320): Promise<void> {
   const { qr } = employee;
-  const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const profileUrl = qr.generalQrUrl || `${window.location.origin}/profile/${employee.id}`;
   const scaledLogoSize = qr.logoUrl ? qr.logoSize * (size / LOGO_SIZE_REFERENCE) : qr.logoSize;
   const svgMarkup = await buildQrSvgMarkup({
     value: profileUrl,

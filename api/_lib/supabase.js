@@ -23,6 +23,8 @@ const defaultQr = {
   logoSize: 40,
   bordered: true,
   shape: 'square',
+  generalQrId: '',
+  generalQrUrl: '',
 };
 
 const defaultSocial = {

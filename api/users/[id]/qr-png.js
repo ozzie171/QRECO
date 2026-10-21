@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   if (!data) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
 
   const employee = rowToEmployee(data);
-  const profileUrl = `https://${req.headers.host}/profile/${employee.id}`;
+  const profileUrl = employee.qr.generalQrUrl || `https://${req.headers.host}/profile/${employee.id}`;
   const png = await buildQrPngBuffer(profileUrl, employee.qr.logoUrl || undefined, 480);
 
   res.setHeader('Content-Type', 'image/png');

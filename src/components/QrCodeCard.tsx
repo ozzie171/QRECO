@@ -20,7 +20,7 @@ const REFERENCE_SIZE = 176;
 
 export default function QrCodeCard({ employee, size = 192, showDownload = true }: Props) {
   const { qr } = employee;
-  const profileUrl = `${window.location.origin}/profile/${employee.id}`;
+  const profileUrl = qr.generalQrUrl || `${window.location.origin}/profile/${employee.id}`;
   // A logo blanks out a chunk of the modules in the middle of the code, so a
   // logo'd QR needs the high error-correction tier — at the default "M" tier
   // that hole alone exceeds the correctable error budget and real phone
