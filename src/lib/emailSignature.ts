@@ -51,17 +51,30 @@ export function buildEmailSignatureHtml(
     imageMode === 'photo' && employee.photoUrl ? employee.photoUrl : `${origin}/api/users/${employee.id}/qr-png`;
   const imageIsPhoto = imageMode === 'photo' && !!employee.photoUrl;
 
-  const socialRow = (['linkedin', 'instagram', 'youtube'] as const)
-    .filter((key) => employee.social[key])
-    .map(
-      (key) => `
+  const mapsUrl = employee.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(employee.address)}`
+    : '';
+
+  const socialRow =
+    (['linkedin', 'instagram', 'youtube'] as const)
+      .filter((key) => employee.social[key])
+      .map(
+        (key) => `
           <td style="padding-right:8px;">
             <a href="${escapeHtml(withHttpProtocol(employee.social[key]))}" target="_blank" style="text-decoration:none;">
               <img src="${origin}/signature-icons/${SOCIAL_ICON_FILES[key]}" width="28" height="28" alt="${SOCIAL_LABELS[key]}" style="display:block; border:0;" />
             </a>
           </td>`,
-    )
-    .join('');
+      )
+      .join('') +
+    (mapsUrl
+      ? `
+          <td>
+            <a href="${escapeHtml(mapsUrl)}" target="_blank" style="text-decoration:none;">
+              <img src="${origin}/signature-icons/map.png" width="28" height="28" alt="Adres" style="display:block; border:0;" />
+            </a>
+          </td>`
+      : '');
 
   const addressLines = escapeHtml(employee.address || '').replace(/\n/g, '<br />');
 

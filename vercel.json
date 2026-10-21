@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/((?!api/|@vite|@react-refresh|src/|node_modules/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/|@vite|@react-refresh|src/|node_modules/|assets/|signature-icons/|eco-logo-beyaz\\.svg|eco-logo-kirmizi\\.svg|favicon\\.svg|icons\\.svg).*)",
+      "destination": "/index.html"
+    }
   ]
 }
