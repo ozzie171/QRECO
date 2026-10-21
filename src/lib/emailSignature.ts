@@ -118,20 +118,20 @@ export function buildEmailSignatureHtml(
     </td>
     <td style="padding:${cellPadding}px; vertical-align:middle; white-space:nowrap;" width="${nameCellWidth}">
       <div style="font-size:${px(21)}px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
-      ${title ? `<div style="font-size:${px(14)}px; color:#444444; margin-top:${px(2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
+      ${title ? `<div style="font-size:${px(14)}px; color:#1a1a1a; margin-top:${px(2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
       ${
         socialRow
           ? `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse; margin-top:${px(12)}px;"><tr>${socialRow}</tr></table>`
           : ''
       }
       <div style="margin-top:${px(14)}px; font-size:${px(14)}px; font-family:${BODY_FONT}; line-height:1.6; white-space:nowrap;">
-        ${employee.phone ? `<div><span style="color:#ea0b42; font-weight:bold;">Tel:</span> <span style="color:#333333;">${escapeHtml(employee.phone)}</span></div>` : ''}
-        ${employee.email ? `<div><span style="color:#ea0b42; font-weight:bold;">Email:</span> <a href="mailto:${escapeHtml(employee.email)}" style="color:#333333; text-decoration:none;">${escapeHtml(employee.email)}</a></div>` : ''}
+        ${employee.phone ? `<div><span style="color:#ea0b42; font-weight:bold;">Tel:</span> <span style="color:#1a1a1a;">${escapeHtml(employee.phone)}</span></div>` : ''}
+        ${employee.email ? `<div><span style="color:#ea0b42; font-weight:bold;">Email:</span> <a href="mailto:${escapeHtml(employee.email)}" style="color:#1a1a1a; text-decoration:none;">${escapeHtml(employee.email)}</a></div>` : ''}
       </div>
     </td>
     <td style="padding:${cellPadding}px; vertical-align:middle;" width="${addressColumnWidth}">
       <img src="${origin}/eco-logo-kirmizi.svg" width="${ecoLogoWidth}" alt="eco" style="display:block; border:0; margin-bottom:${px(12)}px;" />
-      ${employee.address ? `<div style="font-size:${px(13)}px; color:#444444; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
+      ${employee.address ? `<div style="font-size:${px(13)}px; color:#1a1a1a; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
       ${employee.website ? `<div style="margin-top:${px(10)}px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:${px(14)}px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
     </td>
   </tr>
