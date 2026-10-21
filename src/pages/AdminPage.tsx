@@ -740,7 +740,6 @@ export default function AdminPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#bfbfbf',
               borderRadius: 16,
             }}
           >
