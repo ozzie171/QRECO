@@ -214,6 +214,17 @@ export default function AdminPage() {
     setSignatureMode('qr');
   };
 
+  const handleCopySignatureLink = async () => {
+    if (!signatureEmployee) return;
+    const link = `${window.location.origin}/imza/${signatureEmployee.id}?mode=${signatureMode}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      message.success('Mail imzası bağlantısı panoya kopyalandı. Bu bağlantıyı çalışana gönderebilirsiniz.');
+    } catch {
+      message.error('Bağlantı kopyalanırken bir hata oluştu.');
+    }
+  };
+
   const handleCopySignature = async (html: string) => {
     try {
       if (navigator.clipboard && window.ClipboardItem) {
@@ -608,6 +619,9 @@ export default function AdminPage() {
           <Button key="close" onClick={() => setSignatureEmployee(null)}>
             Kapat
           </Button>,
+          <Button key="link" icon={<LinkOutlined />} onClick={handleCopySignatureLink}>
+            Bağlantıyı Kopyala
+          </Button>,
           <Button
             key="copy"
             type="primary"
@@ -674,7 +688,9 @@ export default function AdminPage() {
             </div>
             <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
               "Panoya Kopyala" butonuna bastıktan sonra mail imza düzenleme kutunuza (Gmail, Outlook vb.)
-              doğrudan yapıştırabilirsiniz. Aşağıda ham HTML kodu da yer alıyor.
+              doğrudan yapıştırabilirsiniz. Aşağıda ham HTML kodu da yer alıyor. Kodu kendiniz yapıştırmak yerine
+              çalışana bir bağlantı göndermek isterseniz "Bağlantıyı Kopyala" butonunu kullanın — açtığında
+              kendi "Kodu Kopyala" butonuyla imzasını kendisi kopyalayabileceği bir sayfa açılır.
             </Typography.Text>
             <Input.TextArea value={signatureHtml} readOnly autoSize={{ minRows: 4, maxRows: 8 }} />
           </>

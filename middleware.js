@@ -2,6 +2,7 @@ const ADMIN_USERNAME = 'admin';
 
 const PUBLIC_PREFIXES = [
   '/profile/',
+  '/imza/',
   '/assets/',
   '/eco-logo-beyaz.svg',
   '/eco-logo-kirmizi.svg',
@@ -26,6 +27,9 @@ function isPublicPath(pathname, method) {
     return true;
   }
   if (method === 'GET' && /^\/api\/users\/[^/]+\/qr-png$/.test(pathname)) {
+    return true;
+  }
+  if (method === 'GET' && pathname === '/api/upload/signature-logo') {
     return true;
   }
   return false;
