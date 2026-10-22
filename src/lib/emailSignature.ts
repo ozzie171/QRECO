@@ -57,7 +57,6 @@ export function buildEmailSignatureHtml(
 ): string {
   const origin = window.location.origin;
   const fullName = [employee.firstName, employee.lastName].filter(Boolean).join(' ');
-  const title = [employee.position, employee.enPosition].filter(Boolean).join(' & ');
 
   const imageUrl =
     imageMode === 'photo' && employee.photoUrl ? employee.photoUrl : `${origin}/api/users/${employee.id}/qr-png`;
@@ -129,7 +128,8 @@ export function buildEmailSignatureHtml(
     </td>
     <td style="padding:${cellPadding}px; vertical-align:middle; white-space:nowrap;" width="${nameCellWidth}">
       <div style="font-size:${px(21)}px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
-      ${title ? `<div style="font-size:${px(14)}px; font-weight:bold; color:#a7a9ac; margin-top:${px(2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
+      ${employee.position ? `<div style="font-size:${px(14)}px; font-weight:bold; color:#a7a9ac; margin-top:${px(2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(employee.position)}</div>` : ''}
+      ${employee.enPosition ? `<div style="font-size:${px(14)}px; font-weight:bold; color:#a7a9ac; margin-top:${px(employee.position ? 0 : 2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(employee.enPosition)}</div>` : ''}
       ${
         socialRow
           ? `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse; margin-top:${px(12)}px;"><tr>${socialRow}</tr></table>`
