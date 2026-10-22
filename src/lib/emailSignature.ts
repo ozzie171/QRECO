@@ -100,22 +100,12 @@ export function buildEmailSignatureHtml(
   // wraps the brand content. The extra logo is a separate cell placed
   // outside that bordered shape — so it reads as sitting beside the card
   // rather than being clipped against its rounded edge.
-  // Gmail's (and some other clients') automatic dark-mode re-coloring
-  // decides per element, based on whether THAT element has its own explicit
-  // background — it doesn't look up the DOM tree, so text inside a <td>
-  // that only inherits the outer table's gradient background still gets
-  // treated as "dark text with no known background" and gets lightened
-  // toward gray. Setting both the `bgcolor` attribute and an inline
-  // `background-color` directly on every cell (and on the table itself)
-  // tells it there IS a known light background here, so the real text
-  // colors render untouched instead of being auto-adjusted.
-  const cardBg = '#f5f6f6';
-  const card = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="${cardBg}" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:${cardBg}; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:${px(36)}px;">
+  const card = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:separate; font-family:${BODY_FONT}; background-color:#f5f6f6; background-image:linear-gradient(90deg, #ffffff 0%, #f1f2f2 100%); border:1px solid #e8e8e8; border-radius:${px(36)}px;">
   <tr>
-    <td bgcolor="${cardBg}" style="padding:${cellPadding}px; vertical-align:middle; background-color:${cardBg};" width="${imageSize + cellPadding * 2}">
+    <td style="padding:${cellPadding}px; vertical-align:middle;" width="${imageSize + cellPadding * 2}">
       <img src="${imageUrl}" width="${imageSize}" height="${imageSize}" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? `${imageSize / 2}px` : `${px(16)}px`}; object-fit:cover; width:${imageSize}px; height:${imageSize}px;" />
     </td>
-    <td bgcolor="${cardBg}" style="width:${px(2)}px; vertical-align:middle; font-size:0; line-height:0; background-color:${cardBg};">
+    <td style="width:${px(2)}px; vertical-align:middle; font-size:0; line-height:0;">
       <!-- The colored bar lives on this inner div (sized and centered to
            match the QR/photo image's own height) rather than on the td's
            own background, which would otherwise stretch to the full row
@@ -126,7 +116,7 @@ export function buildEmailSignatureHtml(
            actually holds the column open. -->
       <div style="width:${px(2)}px; height:${imageSize}px; background-color:#eb0045;"></div>
     </td>
-    <td bgcolor="${cardBg}" style="padding:${cellPadding}px; vertical-align:middle; white-space:nowrap; background-color:${cardBg};" width="${nameCellWidth}">
+    <td style="padding:${cellPadding}px; vertical-align:middle; white-space:nowrap;" width="${nameCellWidth}">
       <div style="font-size:${px(21)}px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
       ${title ? `<div style="font-size:${px(14)}px; color:#1a1a1a; margin-top:${px(2)}px; font-family:${BODY_FONT}; white-space:nowrap;">${escapeHtml(title)}</div>` : ''}
       ${
@@ -139,7 +129,7 @@ export function buildEmailSignatureHtml(
         ${employee.email ? `<div><span style="color:#ea0b42; font-weight:bold;">Email:</span> <a href="mailto:${escapeHtml(employee.email)}" style="color:#1a1a1a; text-decoration:none;">${escapeHtml(employee.email)}</a></div>` : ''}
       </div>
     </td>
-    <td bgcolor="${cardBg}" style="padding:${cellPadding}px; vertical-align:middle; background-color:${cardBg};" width="${addressColumnWidth}">
+    <td style="padding:${cellPadding}px; vertical-align:middle;" width="${addressColumnWidth}">
       <img src="${origin}/eco-logo-kirmizi.svg" width="${ecoLogoWidth}" alt="eco" style="display:block; border:0; margin-bottom:${px(12)}px;" />
       ${employee.address ? `<div style="font-size:${px(13)}px; color:#1a1a1a; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
       ${employee.website ? `<div style="margin-top:${px(10)}px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:${px(14)}px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
