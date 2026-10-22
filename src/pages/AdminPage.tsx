@@ -32,6 +32,7 @@ import {
   MailOutlined,
   LoadingOutlined,
   CloseOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
@@ -86,6 +87,7 @@ export default function AdminPage() {
   const [generalQrLogoLibraryOpen, setGeneralQrLogoLibraryOpen] = useState(false);
   const [generalQrSaving, setGeneralQrSaving] = useState(false);
   const [generalQrDownloadingId, setGeneralQrDownloadingId] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const loadExtraLogo = async () => {
     try {
@@ -521,6 +523,13 @@ export default function AdminPage() {
     ? buildEmailSignatureHtml(signatureEmployee, signatureMode, extraLogoUrl)
     : '';
 
+  const normalizedSearch = searchText.trim().toLocaleLowerCase('tr');
+  const filteredEmployees = normalizedSearch
+    ? employees.filter((employee) =>
+        [employee.firstName, employee.lastName].filter(Boolean).join(' ').toLocaleLowerCase('tr').includes(normalizedSearch),
+      )
+    : employees;
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -540,13 +549,21 @@ export default function AdminPage() {
         </Space>
       </Header>
       <Content style={{ padding: 24 }}>
+        <Input
+          allowClear
+          placeholder="İsme göre ara..."
+          prefix={<SearchOutlined />}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{ maxWidth: 320, marginBottom: 16 }}
+        />
         <Table
           rowKey="id"
           columns={columns}
-          dataSource={employees}
+          dataSource={filteredEmployees}
           loading={loading}
           bordered
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 100 }}
         />
       </Content>
 
