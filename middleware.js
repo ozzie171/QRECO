@@ -6,6 +6,7 @@ const PUBLIC_PREFIXES = [
   '/assets/',
   '/eco-logo-beyaz.svg',
   '/eco-logo-kirmizi.svg',
+  '/eco-logo-kirmizi.png',
   '/signature-icons/',
   // Vite's own dev-mode plumbing — only ever requested by `vercel dev`
   // locally; the production build serves everything from /assets/ instead,

@@ -31,6 +31,12 @@ export type SignatureImageMode = 'qr' | 'photo';
 const NAME_FONT = "'Myriad Pro', Myriad, Arial, Helvetica, sans-serif";
 const BODY_FONT = "'Quicksand', 'Century Gothic', Arial, Helvetica, sans-serif";
 
+// eco-logo-kirmizi.png's own pixel dimensions (rasterized from the SVG
+// wordmark) — Outlook's Word rendering engine doesn't display SVG <img>
+// sources at all, so the email HTML must reference a PNG instead; this
+// ratio lets the width-only layout logic below derive a matching height.
+const ECO_LOGO_ASPECT = 1200 / 422;
+
 /** Builds a self-contained, inline-styled HTML table signature matching the
  * brand's email-signature design (MAIL IMZA.svg), populated with one
  * employee's own data. Every image is referenced by its real hosted URL
@@ -106,15 +112,20 @@ export function buildEmailSignatureHtml(
       <img src="${imageUrl}" width="${imageSize}" height="${imageSize}" alt="${imageIsPhoto ? escapeHtml(fullName) : 'QR'}" style="display:block; border:0; border-radius:${imageIsPhoto ? `${imageSize / 2}px` : `${px(16)}px`}; object-fit:cover; width:${imageSize}px; height:${imageSize}px;" />
     </td>
     <td style="width:${px(2)}px; vertical-align:middle; font-size:0; line-height:0;">
-      <!-- The colored bar lives on this inner div (sized and centered to
-           match the QR/photo image's own height) rather than on the td's
-           own background, which would otherwise stretch to the full row
-           height — taller than the image whenever the address column ends
-           up tallest. A bare "&nbsp;" td also has zero intrinsic width
-           under table-layout:auto, collapsing the column to 0 regardless
-           of the width above; this div's own explicit width is what
-           actually holds the column open. -->
-      <div style="width:${px(2)}px; height:${imageSize}px; background-color:#eb0045;"></div>
+      <!-- The colored bar is its own tiny table (sized and centered to
+           match the QR/photo image's own height) rather than a plain div or
+           the outer td's own background. A div's CSS width isn't reliable
+           in Outlook's Word rendering engine, and a td's own background
+           would stretch to the full row height — taller than the image
+           whenever the address column ends up tallest — so a self-contained
+           table cell with real width/height HTML attributes is the one
+           technique that holds its size in both browsers and Outlook.
+           table-layout:fixed is required here: the outer td's font-size:0
+           (needed to zero its own line box) would otherwise inherit in and
+           collapse the &nbsp;'s glyph width to 0, and with the default
+           auto layout a table sizes its columns from content width, so the
+           cell would collapse despite the explicit width/height. -->
+      <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="${px(2)}" style="width:${px(2)}px; table-layout:fixed;"><tr><td width="${px(2)}" height="${imageSize}" bgcolor="#eb0045" style="width:${px(2)}px; height:${imageSize}px; background-color:#eb0045; font-size:1px; line-height:1px;">&nbsp;</td></tr></table>
     </td>
     <td style="padding:${cellPadding}px; vertical-align:middle; white-space:nowrap;" width="${nameCellWidth}">
       <div style="font-size:${px(21)}px; font-weight:bold; color:#ea0b42; font-family:${NAME_FONT}; white-space:nowrap;">${escapeHtml(fullName) || 'İsimsiz Çalışan'}</div>
@@ -130,7 +141,7 @@ export function buildEmailSignatureHtml(
       </div>
     </td>
     <td style="padding:${cellPadding}px; vertical-align:middle;" width="${addressColumnWidth}">
-      <img src="${origin}/eco-logo-kirmizi.svg" width="${ecoLogoWidth}" alt="eco" style="display:block; border:0; margin-bottom:${px(12)}px;" />
+      <img src="${origin}/eco-logo-kirmizi.png" width="${ecoLogoWidth}" height="${Math.round(ecoLogoWidth / ECO_LOGO_ASPECT)}" alt="eco" style="display:block; border:0; margin-bottom:${px(12)}px;" />
       ${employee.address ? `<div style="font-size:${px(13)}px; font-weight:bold; color:#a7a9ac; font-family:${BODY_FONT}; line-height:1.5;">${addressLines}</div>` : ''}
       ${employee.website ? `<div style="margin-top:${px(10)}px;"><a href="${escapeHtml(withHttpProtocol(employee.website))}" target="_blank" style="color:#ea0b42; font-weight:bold; font-size:${px(14)}px; text-decoration:none; font-family:${BODY_FONT};">${escapeHtml(employee.website)}</a></div>` : ''}
     </td>
