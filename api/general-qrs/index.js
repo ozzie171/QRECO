@@ -8,11 +8,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, url } = req.body || {};
+    const { name, url, logoUrl } = req.body || {};
     if (!name || !url) return res.status(400).json({ error: 'İsim ve bağlantı zorunludur.' });
 
     const list = await readGeneralQrLibrary();
-    const entry = { id: nanoid(10), name, url, createdAt: new Date().toISOString() };
+    const entry = { id: nanoid(10), name, url, logoUrl: logoUrl || '', createdAt: new Date().toISOString() };
     list.push(entry);
     try {
       await writeGeneralQrLibrary(list);

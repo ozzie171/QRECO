@@ -318,10 +318,11 @@ export default function AdminPage() {
     }
     setGeneralQrSaving(true);
     try {
-      const created = await createGeneralQr(newGeneralQrName.trim(), newGeneralQrUrl.trim());
+      const created = await createGeneralQr(newGeneralQrName.trim(), newGeneralQrUrl.trim(), generalQrLogoUrl || undefined);
       setGeneralQrs((prev) => [...prev, created]);
       setNewGeneralQrName('');
       setNewGeneralQrUrl('');
+      setGeneralQrLogoUrl('');
       message.success('Genel QR kütüphaneye kaydedildi.');
     } catch {
       message.error('Kaydedilirken bir hata oluştu.');
@@ -815,7 +816,7 @@ export default function AdminPage() {
                       onClick={async () => {
                         setGeneralQrDownloadingId(item.id);
                         try {
-                          await downloadGeneralQrSvg(item.name, item.url, '');
+                          await downloadGeneralQrSvg(item.name, item.url, item.logoUrl || '');
                         } catch {
                           message.error('QR kodu indirilirken bir hata oluştu.');
                         } finally {

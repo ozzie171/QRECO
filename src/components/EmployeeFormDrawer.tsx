@@ -426,6 +426,12 @@ export default function EmployeeFormDrawer({
                             const entry = generalQrs.find((g) => g.id === id);
                             form.setFieldValue(["qr", "generalQrId"], id || "");
                             form.setFieldValue(["qr", "generalQrUrl"], entry?.url || "");
+                            // Genel QR'ın kendi logosu varsa, bu çalışanın QR
+                            // logosunu da onunla eşitle — aksi halde imza/kart
+                            // önizlemesinde logo hiç görünmüyordu.
+                            if (entry?.logoUrl) {
+                              form.setFieldValue(["qr", "logoUrl"], entry.logoUrl);
+                            }
                           }}
                           onClear={() => {
                             form.setFieldValue(["qr", "generalQrId"], "");

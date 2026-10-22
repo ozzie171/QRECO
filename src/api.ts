@@ -82,6 +82,7 @@ export interface GeneralQr {
   id: string;
   name: string;
   url: string;
+  logoUrl?: string;
   createdAt: string;
 }
 
@@ -93,8 +94,8 @@ export async function fetchGeneralQrs(): Promise<GeneralQr[]> {
   return data;
 }
 
-export async function createGeneralQr(name: string, url: string): Promise<GeneralQr> {
-  const { data } = await client.post<GeneralQr>('/general-qrs', { name, url });
+export async function createGeneralQr(name: string, url: string, logoUrl?: string): Promise<GeneralQr> {
+  const { data } = await client.post<GeneralQr>('/general-qrs', { name, url, logoUrl });
   return data;
 }
 
