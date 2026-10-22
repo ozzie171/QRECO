@@ -3,6 +3,7 @@ const ADMIN_USERNAME = 'admin';
 const PUBLIC_PREFIXES = [
   '/profile/',
   '/imza/',
+  '/imzalar',
   '/assets/',
   '/eco-logo-beyaz.svg',
   '/eco-logo-kirmizi.svg',

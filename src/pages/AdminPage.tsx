@@ -88,6 +88,8 @@ export default function AdminPage() {
   const [generalQrSaving, setGeneralQrSaving] = useState(false);
   const [generalQrDownloadingId, setGeneralQrDownloadingId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [bulkSignatureLink, setBulkSignatureLink] = useState<string | null>(null);
 
   const loadExtraLogo = async () => {
     try {
@@ -222,6 +224,22 @@ export default function AdminPage() {
     try {
       await navigator.clipboard.writeText(link);
       message.success('Mail imzası bağlantısı panoya kopyalandı. Bu bağlantıyı çalışana gönderebilirsiniz.');
+    } catch {
+      message.error('Bağlantı kopyalanırken bir hata oluştu.');
+    }
+  };
+
+  const handleOpenBulkSignature = () => {
+    if (selectedRowKeys.length === 0) return;
+    const link = `${window.location.origin}/imzalar?ids=${selectedRowKeys.join(',')}`;
+    setBulkSignatureLink(link);
+  };
+
+  const handleCopyBulkSignatureLink = async () => {
+    if (!bulkSignatureLink) return;
+    try {
+      await navigator.clipboard.writeText(bulkSignatureLink);
+      message.success('Toplu mail imzası bağlantısı panoya kopyalandı.');
     } catch {
       message.error('Bağlantı kopyalanırken bir hata oluştu.');
     }
@@ -549,14 +567,21 @@ export default function AdminPage() {
         </Space>
       </Header>
       <Content style={{ padding: 24 }}>
-        <Input
-          allowClear
-          placeholder="İsme göre ara..."
-          prefix={<SearchOutlined />}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 320, marginBottom: 16 }}
-        />
+        <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+          <Input
+            allowClear
+            placeholder="İsme göre ara..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ maxWidth: 320 }}
+          />
+          {selectedRowKeys.length > 0 && (
+            <Button icon={<MailOutlined />} onClick={handleOpenBulkSignature}>
+              Seçili {selectedRowKeys.length} Çalışan İçin Toplu Mail İmzası Linki
+            </Button>
+          )}
+        </Space>
         <Table
           rowKey="id"
           columns={columns}
@@ -564,6 +589,10 @@ export default function AdminPage() {
           loading={loading}
           bordered
           pagination={{ pageSize: 100 }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (keys) => setSelectedRowKeys(keys as string[]),
+          }}
         />
       </Content>
 
@@ -586,6 +615,26 @@ export default function AdminPage() {
             <QrCodeCard employee={qrEmployee} size={220} />
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Toplu Mail İmzası Bağlantısı"
+        open={!!bulkSignatureLink}
+        onCancel={() => setBulkSignatureLink(null)}
+        footer={[
+          <Button key="close" onClick={() => setBulkSignatureLink(null)}>
+            Kapat
+          </Button>,
+          <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyBulkSignatureLink}>
+            Bağlantıyı Kopyala
+          </Button>,
+        ]}
+      >
+        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          Bu tek bağlantıyı seçtiğiniz {selectedRowKeys.length} çalışana da gönderebilirsiniz. Açtıklarında
+          listeden kendi isimlerini seçip kendi mail imza kodlarını kopyalayabilirler.
+        </Typography.Text>
+        <Input.TextArea value={bulkSignatureLink || ''} readOnly autoSize={{ minRows: 2, maxRows: 4 }} />
       </Modal>
 
       <Modal
