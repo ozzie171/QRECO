@@ -42,8 +42,8 @@ const ECO_LOGO_ASPECT = 1200 / 422;
  * employee's own data. Every image is referenced by its real hosted URL
  * (never a data: URI or client-rendered canvas/SVG) because email clients
  * fetch signature images over the network, not through JS — this is also
- * why the QR goes through the dedicated /qr-png server endpoint instead of
- * the app's own canvas/SVG QR renderer. */
+ * why the QR is a pre-rendered PNG in storage instead of the app's own
+ * canvas/SVG QR renderer. */
 // The whole card (and the extra logo beside it) is rendered at 75% of its
 // original design size — every pixel dimension below is scaled down
 // uniformly by this factor so proportions stay identical, just smaller.
@@ -58,8 +58,11 @@ export function buildEmailSignatureHtml(
   const origin = window.location.origin;
   const fullName = [employee.firstName, employee.lastName].filter(Boolean).join(' ');
 
-  const imageUrl =
-    imageMode === 'photo' && employee.photoUrl ? employee.photoUrl : `${origin}/api/users/${employee.id}/qr-png`;
+  // The pre-rendered PNG lives in storage, so the signature never depends on
+  // this app's server. Older signatures still point at /api/users/:id/qr-png,
+  // which now just redirects to that same stored file.
+  const qrUrl = employee.qrPngUrl || `${origin}/api/users/${employee.id}/qr-png`;
+  const imageUrl = imageMode === 'photo' && employee.photoUrl ? employee.photoUrl : qrUrl;
   const imageIsPhoto = imageMode === 'photo' && !!employee.photoUrl;
 
   const mapsUrl = employee.address

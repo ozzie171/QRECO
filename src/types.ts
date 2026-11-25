@@ -12,6 +12,9 @@ export interface QrDesign {
    * QR-generation path (download, card, email signature) actually encodes,
    * so they never need an extra lookup against the library. */
   generalQrUrl: string;
+  /** Set by the server whenever the signature QR PNG is re-uploaded; used
+   * only to cache-bust `qrPngUrl`. */
+  pngVersion?: number;
 }
 
 export interface SocialLinks {
@@ -40,6 +43,9 @@ export interface Employee {
   textColor: string;
   qr: QrDesign;
   scanCount: number;
+  /** Public storage URL of the pre-rendered signature QR PNG, or '' if it
+   * hasn't been generated yet. */
+  qrPngUrl?: string;
   detectedLang: 'tr' | 'en';
   createdAt: string;
   updatedAt: string;

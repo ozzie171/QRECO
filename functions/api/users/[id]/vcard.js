@@ -1,4 +1,4 @@
-import { getSupabase, rowToEmployee, resolveRequestedLang, pickLocalizedFields } from '../../_lib/supabase.js';
+import { getSupabase, rowToEmployee, resolveRequestedLang, pickLocalizedFields, json, handleErrors } from '../../../../server/lib.js';
 
 function escapeVCardValue(value) {
   return String(value)
@@ -28,25 +28,20 @@ function buildVCard(employee) {
   return lines.join('\r\n');
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+export const onRequestGet = handleErrors(async ({ request, env, params }) => {
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase.from('employees').select('*').eq('id', params.id).maybeSingle();
+  if (error) return json({ error: error.message }, 500);
+  if (!data) return json({ error: 'Kullanıcı bulunamadı.' }, 404);
 
-  const supabase = getSupabase();
-  const { id } = req.query;
-
-  const { data, error } = await supabase.from('employees').select('*').eq('id', id).maybeSingle();
-  if (error) return res.status(500).json({ error: error.message });
-  if (!data) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-
-  const employee = pickLocalizedFields(rowToEmployee(data), resolveRequestedLang(req));
+  const employee = pickLocalizedFields(rowToEmployee(data, supabase), resolveRequestedLang(request));
   const vcard = buildVCard(employee);
   const fileName = [employee.firstName, employee.lastName].filter(Boolean).join('-') || 'kisi';
 
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${fileName}.vcf"`);
-  res.end(vcard);
-}
+  return new Response(vcard, {
+    headers: {
+      'Content-Type': 'text/vcard; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(fileName)}.vcf"; filename*=UTF-8''${encodeURIComponent(fileName)}.vcf`,
+    },
+  });
+});

@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/((?!api/|@vite|@react-refresh|src/|node_modules/|assets/|signature-icons/|eco-logo-beyaz\\.svg|eco-logo-kirmizi\\.svg|eco-logo-kirmizi\\.png|favicon\\.svg|icons\\.svg).*)",
-      "destination": "/index.html"
-    }
-  ]
-}

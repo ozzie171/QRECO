@@ -1,0 +1,8 @@
+# Cloudflare Pages ayarları. Gizli değerler (SUPABASE_URL,
+# SUPABASE_SERVICE_ROLE_KEY, ADMIN_PASSWORD) buraya YAZILMAZ: Cloudflare
+# panelinde Settings > Variables and Secrets kısmından girilir; yerelde
+# .dev.vars dosyasından okunur.
+name = "qreco"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]

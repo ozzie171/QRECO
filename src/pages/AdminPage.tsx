@@ -33,6 +33,7 @@ import {
   LoadingOutlined,
   CloseOutlined,
   SearchOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
 import QrCodeCard from '../components/QrCodeCard';
@@ -47,6 +48,7 @@ import {
   fetchEmployees,
   fetchGeneralQrs,
   fetchSignatureExtraLogo,
+  syncEmployeeQrPng,
   updateEmployee,
   uploadSignatureExtraLogo,
   type GeneralQr,
@@ -90,6 +92,26 @@ export default function AdminPage() {
   const [searchText, setSearchText] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [bulkSignatureLink, setBulkSignatureLink] = useState<string | null>(null);
+  const [qrSyncProgress, setQrSyncProgress] = useState<string | null>(null);
+
+  // Re-renders every employee's signature QR PNG into storage. Saving an
+  // employee already does this for that one employee; this is for the
+  // initial backfill (and to recover if a save's QR upload ever failed).
+  const handleSyncAllQrPngs = async () => {
+    let failed = 0;
+    for (let i = 0; i < employees.length; i++) {
+      setQrSyncProgress(`${i + 1}/${employees.length}`);
+      try {
+        const updated = await syncEmployeeQrPng(employees[i]);
+        setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+      } catch {
+        failed++;
+      }
+    }
+    setQrSyncProgress(null);
+    if (failed) message.warning(`${failed} çalışanın imza QR'ı oluşturulamadı.`);
+    else message.success("Tüm imza QR'ları oluşturuldu.");
+  };
 
   const loadExtraLogo = async () => {
     try {
@@ -560,6 +582,13 @@ export default function AdminPage() {
           </Button>
           <Button icon={<LinkOutlined />} onClick={handleOpenGeneralQrLibrary}>
             Genel QR Kütüphanesi
+          </Button>
+          <Button
+            icon={<SyncOutlined spin={!!qrSyncProgress} />}
+            disabled={!!qrSyncProgress || employees.length === 0}
+            onClick={handleSyncAllQrPngs}
+          >
+            {qrSyncProgress ? `İmza QR'ları oluşturuluyor ${qrSyncProgress}` : "İmza QR'larını Yenile"}
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Yeni Çalışan Ekle

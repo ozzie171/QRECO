@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/signature-icons/*",
+    "/eco-logo-beyaz.svg",
+    "/eco-logo-kirmizi.svg",
+    "/eco-logo-kirmizi.png",
+    "/favicon.svg",
+    "/icons.svg"
+  ]
+}

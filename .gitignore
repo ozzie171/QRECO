@@ -9,3 +9,7 @@ dist-ssr
 
 .DS_Store
 *.log
+
+# Cloudflare (yerel gizli değerler)
+.dev.vars
+.wrangler

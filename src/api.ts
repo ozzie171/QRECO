@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Employee, EmployeeInput } from './types';
+import { employeeQrValue, renderQrPngBlob, svgFileToPngBlob } from './lib/qrPng';
 
 const client = axios.create({ baseURL: '/api' });
 
@@ -13,14 +14,37 @@ export async function fetchEmployee(id: string): Promise<Employee> {
   return data;
 }
 
+/** Renders the employee's email-signature QR in the browser and stores it as
+ * a static PNG, so email clients load it straight from storage instead of
+ * triggering a server render on every open. Returns the employee with its
+ * refreshed `qrPngUrl`. */
+export async function syncEmployeeQrPng(employee: Employee): Promise<Employee> {
+  const blob = await renderQrPngBlob(employeeQrValue(employee), employee.qr.logoUrl || undefined);
+  const { data } = await client.put<Employee>(`/users/${employee.id}/qr-png`, blob, {
+    headers: { 'Content-Type': 'image/png' },
+  });
+  return data;
+}
+
+/** Saving should never fail just because the QR image couldn't be refreshed;
+ * the old image (or the redirect fallback) keeps working meanwhile. */
+async function withQrPng(employee: Employee): Promise<Employee> {
+  try {
+    return await syncEmployeeQrPng(employee);
+  } catch (err) {
+    console.warn('İmza QR görseli güncellenemedi:', err);
+    return employee;
+  }
+}
+
 export async function createEmployee(input: EmployeeInput): Promise<Employee> {
   const { data } = await client.post<Employee>('/users', input);
-  return data;
+  return withQrPng(data);
 }
 
 export async function updateEmployee(id: string, input: Partial<EmployeeInput>): Promise<Employee> {
   const { data } = await client.put<Employee>(`/users/${id}`, input);
-  return data;
+  return withQrPng(data);
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
@@ -68,6 +92,8 @@ export async function fetchSignatureExtraLogo(): Promise<string | null> {
 export async function uploadSignatureExtraLogo(file: File): Promise<string> {
   const form = new FormData();
   form.append('logo', file);
+  // Rasterized here in the browser (Outlook can't show SVG in signatures).
+  form.append('png', await svgFileToPngBlob(file), 'extra-logo.png');
   const { data } = await client.post<{ url: string }>('/upload/signature-logo', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
