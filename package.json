@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "dev:cf": "npm run build && wrangler pages dev"
+    "dev:cf": "npm run build && wrangler pages dev",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name qreco --branch main --commit-dirty=true"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
